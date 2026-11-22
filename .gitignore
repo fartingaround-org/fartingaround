@@ -20,6 +20,6 @@ worker-configuration.d.ts
 /tools/fa/dist/
 
 # scratch and leftovers
-/_to_delete
+_to_delete/
 /data-*
 /tools/fa/fa.prev

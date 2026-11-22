@@ -130,6 +130,16 @@ test('deleting a story deletes its comments', async () => {
 	assert.equal(Number((await db.get('SELECT COUNT(*) AS n FROM comments'))?.n), 0);
 });
 
+test('comments are listed in the order they were posted, even within one millisecond', async () => {
+	// Fast enough that several land on the same clock tick. Without a rule for
+	// ties the list fell back to the comments' random ids.
+	const bodies = Array.from({ length: 40 }, (_, i) => `comment ${i}`);
+	for (const b of bodies) await say(owner, b);
+	assert.deepEqual((await view()).map((c) => c.body), bodies);
+	const stamps = (await db.all('SELECT created_at FROM comments ORDER BY created_at')).map((r) => String(r.created_at));
+	assert.equal(new Set(stamps).size, stamps.length, 'no two comments on a story share a timestamp');
+});
+
 test('a comment can point at a photo; replies follow it; the pointer shows only while the photo is in the story', async () => {
 	const top = await comments.addComment(db, { storySlug: S, author: { contactId: sam }, body: "That's me", photoId: 'img-1' });
 	// A reply takes its parent's photo, whatever it was sent with.

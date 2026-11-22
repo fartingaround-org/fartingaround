@@ -65,7 +65,12 @@ const isOwner = (/** @type {Author} */ a) => 'owner' in a;
 export async function addComment(db, c) {
 	const body = clean(c.body);
 	return db.tx(async (t) => {
-		const now = nowIso();
+		// Comments are listed in the order they were posted. Two posted in the
+		// same millisecond would tie and fall back to their random ids, so a new
+		// comment is stamped at least a millisecond after the story's latest.
+		let now = nowIso();
+		const last = await t.get('SELECT MAX(created_at) AS at FROM comments WHERE story_slug = ?', [c.storySlug]);
+		if (last?.at && String(last.at) >= now) now = new Date(Date.parse(String(last.at)) + 1).toISOString();
 		let photoId = c.photoId ? String(c.photoId) : null;
 		if (c.parentId) {
 			const parent = await t.get('SELECT story_slug, parent_id, status, photo_id FROM comments WHERE id = ?', [c.parentId]);
