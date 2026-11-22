@@ -91,7 +91,7 @@ func findSource(exe string) (string, error) {
 			return d, nil
 		}
 	}
-	return "", errorf("can't find fa's source on this computer. It is the tools/fa folder of a fartingaround.fun checkout: run this from inside one, or set FA_SRC to it once (after that fa remembers)")
+	return "", errorf("can't find fa's source on this computer. It is the tools/fa folder of a fartingaround checkout: run this from inside one, or set FA_SRC to it once (after that fa remembers)")
 }
 
 // goBuild compiles the source at src into out. Empty goos/goarch build for

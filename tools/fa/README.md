@@ -56,7 +56,23 @@ fa setup
 ```
 
 asks where to put things, which database, how the site is reached, and
-starts it. Three ways to expose a site:
+starts it.
+
+Every question can also be answered ahead of time, so a script (or a server's
+first-boot script) can run it with nothing to type:
+
+```sh
+fa setup --yes --domain example.org --proxy caddy --acme-email me@example.org
+fa setup --yes --answers site.answers --env ELEVENLABS_API_KEY=…
+```
+
+`--yes` asks nothing and takes the default for anything not given; without it,
+setup still asks whatever you did not answer. `--answers` is a file of
+`key=value` lines with the same names as the flags. `fa setup --help` lists
+them all. A generated admin password is not printed in this mode; read it with
+`fa env get ADMIN_PASSWORD`.
+
+Three ways to expose a site:
 
 | mode | when |
 |---|---|

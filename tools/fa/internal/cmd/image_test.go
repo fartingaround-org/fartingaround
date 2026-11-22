@@ -184,3 +184,24 @@ func TestShortDigest(t *testing.T) {
 		}
 	}
 }
+
+// What GitHub's registry does for a private image: the token service itself
+// refuses an anonymous visitor.
+func TestRemoteDigestTokenServiceRefuses(t *testing.T) {
+	var srv *httptest.Server
+	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/token" {
+			w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Bearer realm="%s/token",service="test"`, srv.URL))
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer srv.Close()
+	old := registryBase
+	registryBase = func(string) string { return srv.URL }
+	defer func() { registryBase = old }()
+
+	_, err := remoteDigest(srv.Client(), imageRef{"registry.test", "org/site", "edge"})
+	if err == nil || !strings.Contains(err.Error(), "is it public?") {
+		t.Errorf("want a hint that the image is not public, got %v", err)
+	}
+}

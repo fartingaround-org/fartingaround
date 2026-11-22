@@ -150,6 +150,10 @@ func anonymousToken(c *http.Client, challenge string) (string, error) {
 		return "", err
 	}
 	defer res.Body.Close()
+	if res.StatusCode == http.StatusUnauthorized || res.StatusCode == http.StatusForbidden {
+		// How a registry answers an anonymous visitor asking about a private image.
+		return "", fmt.Errorf("the registry won't serve this image without a sign-in (is it public?)")
+	}
 	if res.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("the registry's token service answered HTTP %d", res.StatusCode)
 	}
@@ -267,7 +271,7 @@ func deployImage(c *Ctx, ref, commitBefore string) error {
 
 	say("downloading %s…", ref)
 	if err := composePass(in, "pull", "site"); err != nil {
-		return errorf("couldn't download %s (%v) — the site is still running what it was", ref, err)
+		return errorf("couldn't download %s (%v) — the site is still running what it was%s", ref, err, pullHint(ref))
 	}
 	if err := composePass(in, "up", "-d", "--no-build", "--remove-orphans"); err != nil {
 		return rollbackImage(c, ref, previous, commitBefore, err)
@@ -309,4 +313,24 @@ func rollbackImage(c *Ctx, ref, previous, commitBefore string, cause error) erro
 	}
 	warn("back on the previous image. `fa deploy` again once a fixed one is published.")
 	return cause
+}
+
+// pullHint says what is probably wrong when docker could not download the
+// image, by asking the registry the same question without any sign-in.
+func pullHint(ref string) string {
+	r, ok := parseImageRef(ref)
+	if !ok {
+		return ""
+	}
+	_, err := remoteDigest(&http.Client{Timeout: 15 * time.Second}, r)
+	return describePullFailure(r, err)
+}
+
+func describePullFailure(r imageRef, anonymousErr error) string {
+	if anonymousErr == nil {
+		// Anyone may read it, yet docker was refused: docker is sending a
+		// sign-in the registry rejects, usually one saved long ago.
+		return fmt.Sprintf("\n  The registry serves this image without a sign-in, so docker is probably sending an old one.\n  Try: docker logout %s   and then fa deploy again.", r.Registry)
+	}
+	return "\n  Asked without a sign-in: " + anonymousErr.Error() + "."
 }
