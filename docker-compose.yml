@@ -2,6 +2,14 @@
 #
 #   cp .env.example .env        # at least ADMIN_PASSWORD
 #   docker network create web   # once per host — shared with your reverse proxy
+#   docker compose up -d        # downloads the published image and starts it
+#
+# The image: a ready-made one is published for every release, so the server
+# does not have to build anything. FA_VERSION in .env chooses which:
+#   latest  the newest release (the default)
+#   edge    every commit on main, for trying a change before it is released
+#   0.2.0   one release, and it stays there until you change this
+# To build from this checkout instead (development, or your own changes):
 #   docker compose up -d --build
 #
 # Storage: everything lives in one folder mounted at /data — the SQLite
@@ -25,6 +33,7 @@
 
 services:
   site:
+    image: ${FA_IMAGE:-ghcr.io/fartingaround-org/fartingaround}:${FA_VERSION:-latest}
     build: .
     container_name: fartingaround-site
     restart: unless-stopped

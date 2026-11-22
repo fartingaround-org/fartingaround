@@ -2,20 +2,33 @@ package cmd
 
 import (
 	"os"
+	"strings"
 	"time"
 
 	"github.com/fartingaround-org/fartingaround/tools/fa/internal/sh"
 )
 
 func init() {
-	register(&command{name: "up", summary: "build (if needed) and start the stack", run: runUp})
+	register(&command{name: "up", summary: "start the stack, downloading (or building) the site image if needed", run: runUp})
 	register(&command{name: "down", summary: "stop the stack (data stays)", run: func(c *Ctx, _ []string) error { return composePass(c.In, "down") }})
 	register(&command{name: "restart", summary: "restart the site container", run: func(c *Ctx, _ []string) error { return composePass(c.In, "restart", "site") }})
-	register(&command{name: "deploy", summary: "git pull, rebuild, restart, health-check; roll back if it doesn't come up", run: runDeploy})
+	register(&command{name: "deploy", summary: "download the newest site image (or rebuild), restart, health-check; roll back if it doesn't come up", run: runDeploy})
 	register(&command{name: "update", summary: "show what a deploy would pull (fa update) — alias for deploy --check", run: func(c *Ctx, a []string) error { return runDeploy(c, append(a, "--check")) }})
 }
 
-const siteImage = "fartingaroundfun-site" // compose's default image name for this project dir
+// builtImage is the name compose gave the image it built on this server:
+// <project folder>-site. Read off the running container, because the folder
+// is not always called the same thing.
+func builtImage() string {
+	if ci, err := inspectContainer(siteContainer); err == nil && ci.Image != "" {
+		name := ci.Image
+		if colon := strings.LastIndex(name, ":"); colon > strings.LastIndex(name, "/") {
+			name = name[:colon]
+		}
+		return name
+	}
+	return "fartingaroundfun-site" // a checkout in a folder named fartingaround.fun
+}
 
 func ensureDataPath(c *Ctx) error {
 	dp := c.In.DataPath()
@@ -34,7 +47,11 @@ func runUp(c *Ctx, _ []string) error {
 	if err := ensureDataPath(c); err != nil {
 		return err
 	}
-	if err := composePass(c.In, "up", "-d", "--build", "--remove-orphans"); err != nil {
+	args := []string{"up", "-d", "--remove-orphans"}
+	if publishedImage(c.In) == "" {
+		args = append(args, "--build") // this install builds its own
+	}
+	if err := composePass(c.In, args...); err != nil {
 		return err
 	}
 	if err := waitHealthy(c.In, 90*time.Second); err != nil {
@@ -58,6 +75,14 @@ func runDeploy(c *Ctx, args []string) error {
 		return err
 	}
 	ahead, err := sh.Out(in.Dir, "git", "log", "--oneline", "HEAD..@{u}")
+
+	// A site that runs the published image has a second thing a deploy can
+	// bring in: a newer image under the same tag.
+	ref := publishedImage(in)
+	imageLine, imageNewer := "", false
+	if ref != "" {
+		imageLine, imageNewer = imageNews(ref)
+	}
 	switch {
 	case err != nil:
 		// No upstream to compare with (a detached HEAD, or a branch that tracks
@@ -66,14 +91,27 @@ func runDeploy(c *Ctx, args []string) error {
 			return errorf("couldn't compare with what is pushed (%v) — is this branch tracking a remote?", err)
 		}
 		warn("couldn't compare with what is pushed (%v); pulling anyway", err)
-	case ahead == "":
+	case ahead == "" && !imageNewer:
 		say("already at %s — nothing new upstream", before)
+		if imageLine != "" {
+			say("%s", imageLine) // why the image could not be checked
+		}
 		if check {
 			return nil
 		}
-		say("rebuilding anyway (local changes / env)")
+		if ref != "" {
+			say("restarting anyway (settings may have changed)")
+		} else {
+			say("rebuilding anyway (local changes / env)")
+		}
 	default:
-		say("incoming:\n%s", indent(ahead))
+		// The dashboard reads the lines under "incoming:" as what a deploy
+		// would bring in, so the image goes there with the commits.
+		incoming := ahead
+		if imageNewer {
+			incoming = strings.TrimSpace(imageLine + "\n" + ahead)
+		}
+		say("incoming:\n%s", indent(incoming))
 		if check {
 			return nil
 		}
@@ -85,26 +123,32 @@ func runDeploy(c *Ctx, args []string) error {
 		return err
 	}
 
-	// Keep the last good image around so a bad build can be undone.
+	// The pull may have brought a different compose file, so ask again.
+	if ref := publishedImage(in); ref != "" {
+		return deployImage(c, ref, before)
+	}
+
+	// Built on this server. Keep the last good image around so a bad build can be undone.
+	siteImage := builtImage()
 	if _, err := sh.Out("", "docker", "image", "inspect", siteImage+":latest"); err == nil {
 		_, _ = sh.Out("", "docker", "tag", siteImage+":latest", siteImage+":previous")
 	}
 
 	say("building %s…", gitHead(in))
 	if err := composePass(in, "up", "-d", "--build", "--remove-orphans"); err != nil {
-		return rollback(c, before, err)
+		return rollback(c, siteImage, before, err)
 	}
 	if err := waitHealthy(in, 90*time.Second); err != nil {
 		out, _ := compose(in, "logs", "--tail", "40", "site")
 		say("%s", indent(out))
-		return rollback(c, before, err)
+		return rollback(c, siteImage, before, err)
 	}
 	_, _ = sh.Out("", "docker", "image", "prune", "-f")
 	ok("deployed %s", gitHead(in))
 	return nil
 }
 
-func rollback(c *Ctx, commit string, cause error) error {
+func rollback(c *Ctx, siteImage, commit string, cause error) error {
 	in := c.In
 	warn("deploy failed: %v", cause)
 	if _, err := sh.Out("", "docker", "image", "inspect", siteImage+":previous"); err != nil {

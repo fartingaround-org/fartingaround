@@ -101,13 +101,19 @@ below run over ssh — the server never opens a port for it.
 fa status              what's running, disk, last backup
 fa logs [site|caddy|tunnel|db] [-f] [-n N] [--since 15m]
 fa doctor              the usual problems, each with its fix
-fa deploy              pull, rebuild, health-check; rolls back if the new build doesn't come up
-fa update              what a deploy would pull
+fa deploy              download the newest image, restart, health-check; goes back to the previous image if it doesn't come up
+fa update              what a deploy would bring in: a newer image, new commits, or nothing
 fa backup [--to DIR]   consistent DB copy + all media as one tar, off the data volume (keeps 7)
 fa restore FILE        put a backup back (SQLite installs)
 fa env list|get|set|unset   edit .env safely; the file as it was stays beside it as .env.fa-backup
 fa token rotate        new phone-app token
 ```
+
+Which image a deploy downloads is `FA_VERSION` in the server's `.env`
+(`fa env set FA_VERSION edge`): `latest` is the newest release and the default,
+`edge` is every commit on `main`, and a version such as `0.2.0` stays on that
+release. An install whose compose file only builds, or one with `FA_BUILD=1`,
+is built on the server as before.
 
 From the laptop: `fa --host tony@box deploy`. Set `FA_HOST` to skip the flag (`fa ui` picks it up as the first server).
 

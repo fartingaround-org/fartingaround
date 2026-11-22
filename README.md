@@ -65,8 +65,13 @@ server the first time each size is asked for.
 ```bash
 cp .env.example .env     # ADMIN_PASSWORD at minimum; CAPTURE_API_TOKEN for the phone app
 docker network create web
-docker compose up -d --build
+docker compose up -d     # downloads the published image and starts it
 ```
+
+The server does not build anything. `FA_VERSION` in `.env` picks the image:
+`latest` (the newest release, the default), `edge` (every commit on `main`), or
+one release such as `0.2.0`. To build from the checkout instead, for
+development or your own changes, use `docker compose up -d --build`.
 
 Point your reverse proxy at `fartingaround-site:3000` on the `web` network —
 there's a Caddy snippet in `docker-compose.yml`. Log in at `/login`.
