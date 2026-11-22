@@ -1,0 +1,189 @@
+@import 'tailwindcss';
+
+/* -----------------------------------------------------------------------
+   Design tokens — postal, literary, cream-and-ink.
+   ----------------------------------------------------------------------- */
+@theme {
+	--color-paper: #f5efe1;
+	--color-paper-deep: #ece4d0;
+	--color-ink: #1b1a16;
+	--color-ink-soft: #3c382e;
+	--color-pencil: #6e6a5e;
+	--color-pencil-soft: #a39e8e;
+	--color-wax: #b3322a;
+	--color-postmark: #2a3a52;
+	--color-stamp: #d9b96a;
+
+	--font-display: 'Fraunces', 'Iowan Old Style', 'Georgia', serif;
+	--font-body: 'Fraunces', 'Iowan Old Style', 'Georgia', serif;
+	--font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+	--font-hand: 'Caveat', 'Bradley Hand', cursive;
+
+	--measure: 36rem;
+}
+
+/* -----------------------------------------------------------------------
+   Ink — the night palette. Follows the system setting unless the reader
+   has picked a theme (data-theme on <html>, set from the footer toggle).
+   The two blocks must stay identical; CSS has no way to share them.
+   ----------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='paper']) {
+		color-scheme: dark;
+		--color-paper: #171512;
+		--color-paper-deep: #24211c;
+		--color-ink: #ece4d0;
+		--color-ink-soft: #d2cbb9;
+		--color-pencil: #b0aa99;
+		--color-pencil-soft: #6b665a;
+		--color-wax: #e2655a;
+		--color-postmark: #9fb4d6;
+		--color-stamp: #d9b96a;
+		--paper-glow: rgba(255, 255, 255, 0.03);
+		--logo-blend: screen;
+		--logo-filter: invert(1) contrast(1.05);
+	}
+}
+:root[data-theme='ink'] {
+	color-scheme: dark;
+	--color-paper: #171512;
+	--color-paper-deep: #24211c;
+	--color-ink: #ece4d0;
+	--color-ink-soft: #d2cbb9;
+	--color-pencil: #b0aa99;
+	--color-pencil-soft: #6b665a;
+	--color-wax: #e2655a;
+	--color-postmark: #9fb4d6;
+	--color-stamp: #d9b96a;
+	--paper-glow: rgba(255, 255, 255, 0.03);
+	--logo-blend: screen;
+	--logo-filter: invert(1) contrast(1.05);
+}
+
+/* Surfaces that stay light whatever the theme: map tiles are light, and
+   Leaflet's popups are white. */
+.paper-island, .leaflet-container {
+	color-scheme: light;
+	--color-paper: #f5efe1;
+	--color-paper-deep: #ece4d0;
+	--color-ink: #1b1a16;
+	--color-ink-soft: #3c382e;
+	--color-pencil: #6e6a5e;
+	--color-pencil-soft: #a39e8e;
+	--color-wax: #b3322a;
+	--color-postmark: #2a3a52;
+	--color-stamp: #d9b96a;
+	color: var(--color-ink);
+}
+
+/* -----------------------------------------------------------------------
+   Globals.
+   ----------------------------------------------------------------------- */
+html {
+	background: var(--color-paper);
+	color: var(--color-ink);
+	font-family: var(--font-body);
+	font-optical-sizing: auto;
+	font-feature-settings: 'ss01', 'ss02';
+	font-size: 18px;
+	line-height: 1.55;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+@media (min-width: 768px) {
+	html { font-size: 19px; }
+}
+
+body {
+	min-height: 100dvh;
+	/* viewport-fit=cover lets the page run under a notch in landscape. */
+	padding-left: env(safe-area-inset-left);
+	padding-right: env(safe-area-inset-right);
+	background:
+		radial-gradient(circle at 20% 10%, var(--paper-glow, rgba(255, 255, 255, 0.5)) 0, transparent 40%),
+		radial-gradient(circle at 80% 80%, rgba(179, 50, 42, 0.04) 0, transparent 50%),
+		var(--color-paper);
+}
+
+a {
+	color: var(--color-ink);
+	text-decoration-color: var(--color-pencil-soft);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 3px;
+	transition: text-decoration-color 0.15s ease;
+}
+a:hover { text-decoration-color: var(--color-wax); }
+
+::selection { background: var(--color-stamp); color: #1b1a16; }
+
+/* One focus ring for keyboard and switch users, everywhere. */
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+	outline: 2px solid var(--color-wax);
+	outline-offset: 2px;
+}
+/* Touch has no hover: give taps a brief wax tint instead of the grey default. */
+a, button { -webkit-tap-highlight-color: rgba(179, 50, 42, 0.15); }
+
+input, textarea, button, select {
+	font-family: inherit;
+	font-size: inherit;
+	color: inherit;
+}
+
+.display {
+	font-family: var(--font-display);
+	font-weight: 500;
+	font-style: italic;
+	font-variation-settings: 'opsz' 144, 'SOFT' 50;
+	letter-spacing: -0.02em;
+	line-height: 1;
+	/* Default size; pages that want a bigger title set their own. */
+	font-size: clamp(2rem, 7vw, 3rem);
+}
+
+.eyebrow {
+	font-family: var(--font-mono);
+	font-size: 0.72rem;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--color-pencil);
+}
+
+.hand {
+	font-family: var(--font-hand);
+	font-weight: 600;
+	color: var(--color-wax);
+}
+
+/* -----------------------------------------------------------------------
+   Story rendering — used by <StoryBlocks /> on story pages.
+   ----------------------------------------------------------------------- */
+.prose-story {
+	font-size: 1.075rem;
+	line-height: 1.7;
+	color: var(--color-ink-soft);
+	max-width: 64rem;
+	margin: 0 auto;
+}
+
+.prose-story p {
+	max-width: var(--measure);
+	margin: 1.2em auto;
+	hyphens: auto;
+}
+
+.prose-story h2 {
+	font-family: var(--font-display);
+	font-style: italic;
+	font-weight: 500;
+	font-size: 1.7rem;
+	line-height: 1.15;
+	letter-spacing: -0.01em;
+	color: var(--color-ink);
+	max-width: var(--measure);
+	margin: 2.2em auto 1em;
+}
+
+.prose-story em { color: var(--color-ink); }
+.prose-story strong { color: var(--color-ink); font-weight: 600; }

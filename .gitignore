@@ -1,0 +1,25 @@
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/.wrangler
+/dist
+.env
+.env.*
+.dev.vars
+!.env.example
+!.dev.vars.example
+vite.config.js.timestamp-*
+worker-configuration.d.ts
+
+# local data (sqlite db + media)
+/data
+
+# fa (tools/fa): the built binary and release builds
+/tools/fa/fa
+/tools/fa/dist/
+
+# scratch and leftovers
+/_to_delete
+/data-*
+/tools/fa/fa.prev

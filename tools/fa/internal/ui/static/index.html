@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fa</title>
+<link rel="icon" href="data:,">
+<style>
+	:root {
+		--paper:#f5efe1; --paper-deep:#ece4d0; --ink:#1b1a16; --ink-soft:#3c382e;
+		--pencil:#6e6a5e; --pencil-soft:#a39e8e; --wax:#b3322a; --postmark:#2a3a52; --ok:#3f6b3a; --amber:#8a6212;
+		--mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+		--serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root { --paper:#17150f; --paper-deep:#241f16; --ink:#efe6d2; --ink-soft:#cfc6b0; --pencil:#9a927e; --pencil-soft:#5d5748; --wax:#e0463c; --postmark:#9fb2d2; --ok:#8fbf86; --amber:#e0b060; }
+	}
+	* { box-sizing: border-box; }
+	html, body { margin:0; background:var(--paper); color:var(--ink); font: 15px/1.5 var(--serif); }
+	a { color: var(--wax); }
+	code { font: 12.5px var(--mono); }
+	[hidden] { display: none !important; }
+	.app { display:grid; grid-template-columns: 230px minmax(0, 1fr); min-height:100vh; }
+	aside { border-right:1px solid var(--paper-deep); padding:20px 16px; display:flex; flex-direction:column; gap:14px; }
+	.brand { font-size:22px; letter-spacing:-.01em; }
+	.brand small { display:block; font: 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--wax); margin-top:4px; }
+	.eyebrow { font: 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--pencil); margin: 10px 0 6px; }
+	.hosts button, .tabs button { display:block; width:100%; text-align:left; background:none; border:1px solid transparent; color:var(--ink); font: inherit; padding:6px 8px; border-radius:3px; cursor:pointer; }
+	.hosts button:hover, .tabs button:hover { background: color-mix(in srgb, var(--paper) 50%, var(--paper-deep)); }
+	/* where you are, not a call to action */
+	.hosts button[aria-pressed=true], .tabs button[aria-pressed=true] { background:var(--paper-deep); border-color:var(--pencil-soft); }
+	.hosts button small { display:block; font: 11px var(--mono); color:var(--pencil); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+	.dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--pencil-soft); margin-right:7px; vertical-align:1px; }
+	.dot.ok { background:var(--ok); } .dot.warn { background:var(--amber); } .dot.bad { background:var(--wax); }
+	.flag { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--amber); margin-left:6px; vertical-align:middle; }
+	main { padding: 24px 28px; max-width: 1100px; min-width:0; }
+	h1 { font-weight: normal; font-size: 26px; margin: 0 0 4px; }
+	.sub { color: var(--pencil); font: 12px var(--mono); margin-bottom: 18px; }
+	.row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin: 10px 0; }
+	/* One filled button per group — the thing to do next. Everything else is an
+	   outline, so the filled one cannot be mistaken for its neighbours. */
+	button.act { background:var(--paper); border:1px solid var(--pencil-soft); color:var(--ink); font: 13px var(--mono); padding:6px 12px; border-radius:3px; cursor:pointer; }
+	button.act:hover { border-color: var(--ink); }
+	button.act.primary { background:var(--ink); border-color:var(--ink); color:var(--paper); }
+	button.act.danger { border-color: var(--wax); color: var(--wax); }
+	button.act.mini { padding:2px 8px; font-size:11.5px; }
+	button.act:disabled { opacity:.45; cursor:default; border-color:var(--pencil-soft); }
+	button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--postmark); outline-offset:1px; }
+	pre.out { background:var(--paper-deep); border:1px solid var(--pencil-soft); border-radius:3px; padding:12px 14px; font: 12.5px/1.5 var(--mono); white-space:pre-wrap; word-break:break-word; max-height:60vh; overflow:auto; margin:8px 0 0; color: var(--ink-soft); }
+	pre.out .ok { color: var(--ok); } pre.out .bad { color: var(--wax); } pre.out .warn { color: var(--amber); } pre.out .sep { color: var(--pencil); }
+	/* an idle console is a note, not an empty box */
+	pre.out:empty { border-style:dashed; background:transparent; }
+	pre.out:empty::before { content: attr(data-empty); color:var(--pencil); font: 13px var(--serif); }
+	.status { font: 12px var(--mono); color:var(--pencil); min-height:18px; margin-top:6px; white-space: pre-wrap; }
+	.status.err { color: var(--wax); }
+	.card { border:1px solid var(--paper-deep); border-radius:4px; padding:14px 16px; margin-bottom:16px; background: color-mix(in srgb, var(--paper) 70%, var(--paper-deep)); min-width:0; }
+	.card h2 { margin:0 0 6px; font-size:16px; font-weight:normal; display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+	.card h2 small { font: 11px var(--mono); color: var(--pencil); }
+	.card h2 button { margin-left:auto; }
+	.card-note { color:var(--pencil); font-size:13px; margin:0 0 10px; }
+	.grid2 { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:16px; }
+	@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } .app { grid-template-columns: 1fr; } aside { border-right:0; border-bottom:1px solid var(--paper-deep); } main { padding:18px 16px; } }
+	input, select { font: 13px var(--mono); padding:6px 8px; border:1px solid var(--pencil-soft); background:var(--paper); color:var(--ink); border-radius:3px; }
+	label.field { display:block; font: 11px var(--mono); color:var(--pencil); margin:8px 0 3px; }
+	.spinner { display:inline-block; width:10px; height:10px; border:2px solid var(--pencil-soft); border-top-color: var(--wax); border-radius:50%; animation: spin .8s linear infinite; vertical-align:middle; margin-left:6px; }
+	@keyframes spin { to { transform: rotate(360deg); } }
+	@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 3s; } }
+	/* the server at a glance */
+	.stats { display:grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap:8px; margin:4px 0 10px; }
+	.stat { background:var(--paper); border:1px solid var(--paper-deep); border-radius:4px; padding:9px 11px; min-width:0; }
+	.stat b { display:block; font: 19px/1.2 var(--serif); font-weight:normal; font-variant-numeric: tabular-nums; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+	.stat span { display:block; color:var(--pencil); font: 11px var(--mono); margin-top:3px; }
+	.stat.warn { border-color: var(--amber); } .stat.warn b { color: var(--amber); }
+	.stat.bad { border-color: var(--wax); } .stat.bad b { color: var(--wax); }
+	.banner { border:1px solid var(--amber); border-radius:4px; padding:9px 12px; margin-bottom:16px; font-size:14px; }
+	.banner.quiet { border:0; padding:0; color:var(--pencil); font: 12px var(--mono); }
+	.banner ul { margin:6px 0 0; padding-left:18px; font: 12px var(--mono); color:var(--ink-soft); }
+	.banner button { margin-left:8px; }
+	/* a question asked in place: what will happen, and a button that names it */
+	.confirmbox { border:1px solid var(--postmark); border-radius:4px; padding:10px 12px; margin:10px 0 4px; font-size:14px; background:var(--paper); }
+	.confirmbox.danger { border-color: var(--wax); }
+	.confirmbox .ctitle { margin-bottom:4px; }
+	.confirmbox p { margin:3px 0; color:var(--pencil); font-size:13px; }
+	.confirmbox ul { margin:4px 0; padding-left:18px; font: 12px var(--mono); color:var(--ink-soft); }
+	.env table { width:100%; border-collapse:collapse; font: 12.5px var(--mono); }
+	.env th { text-align:left; font: 11px var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--pencil); padding:5px 6px; font-weight:normal; }
+	.env td { padding:5px 6px; border-top:1px solid var(--paper-deep); vertical-align:middle; }
+	.env td:first-child { white-space:nowrap; }
+	.env td.now { word-break:break-all; color:var(--ink-soft); }
+	.env tr.envgroup td { border-top:0; padding-top:14px; color:var(--pencil); font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+	.reveal { display:flex; gap:6px; align-items:center; }
+	.reveal input { flex:1; min-width:0; width:100%; }
+	.muted { color: var(--pencil); font-size: 13px; }
+	.bad { color: var(--wax); }
+</style>
+</head>
+<body>
+<div class="app">
+	<aside>
+		<div class="brand">fart around<small>control</small></div>
+		<div>
+			<div class="eyebrow">Servers</div>
+			<div class="hosts" id="hosts"></div>
+			<button class="act" style="margin-top:8px;width:100%" id="btnAddHost">+ add server</button>
+		</div>
+		<div>
+			<div class="eyebrow">View</div>
+			<div class="tabs" id="tabs" role="group" aria-label="view">
+				<button data-tab="overview" aria-pressed="true">Overview<span id="flag-overview"></span></button>
+				<button data-tab="logs" aria-pressed="false">Logs<span id="flag-logs"></span></button>
+				<button data-tab="actions" aria-pressed="false">Actions<span id="flag-actions"></span></button>
+				<button data-tab="backups" aria-pressed="false">Backups<span id="flag-backups"></span></button>
+				<button data-tab="settings" aria-pressed="false">Settings</button>
+			</div>
+		</div>
+		<div class="muted" style="margin-top:auto; font: 11px var(--mono)" id="ver"></div>
+	</aside>
+	<main>
+		<!-- a form in the page, not three browser prompts: every field in sight, with what it is for -->
+		<section id="addhost" class="card" hidden>
+			<h2 id="addhost-title">Add a server</h2>
+			<p class="card-note" id="addhost-note">A machine with fa installed that you can already ssh to. Nothing is changed on it by adding it here.</p>
+			<label class="field" for="add-ssh">ssh target — user@host or an ssh config alias</label>
+			<input id="add-ssh" placeholder="tony@box" autocomplete="off" style="width:min(100%, 360px)">
+			<label class="field" for="add-name">name for the list (blank = the host)</label>
+			<input id="add-name" placeholder="box" autocomplete="off" style="width:min(100%, 360px)">
+			<label class="field" for="add-dir">install directory on the server (blank = fa finds it)</label>
+			<input id="add-dir" placeholder="/home/tony/fartingaround.fun" autocomplete="off" style="width:min(100%, 360px)">
+			<div class="row"><button class="act primary" id="add-save">add server</button><button class="act" id="add-cancel">cancel</button></div>
+			<div class="status" id="add-status" aria-live="polite"></div>
+		</section>
+
+		<section id="overview" hidden>
+			<h1 id="h-name"></h1>
+			<div class="sub" id="h-ssh"></div>
+			<div id="fa-banner"></div>
+			<div id="update-banner"></div>
+			<div class="card">
+				<h2>Status <small id="status-when"></small><button class="act" id="btnRefresh">refresh</button></h2>
+				<div class="stats" id="stats" hidden></div>
+				<pre class="out" id="status-out" data-empty="Status appears here."></pre>
+			</div>
+			<div class="grid2">
+				<div class="card"><h2>Doctor <small>read-only checks, each with its fix</small><button class="act" id="btnDoctor">run</button></h2><pre class="out" id="doctor-out" data-empty="Press run to check the usual problems."></pre></div>
+				<div class="card"><h2>Disk <small>what's on the data volume</small><button class="act" id="btnDisk">run</button></h2><pre class="out" id="disk-out" data-empty="Press run to see what takes the room."></pre></div>
+			</div>
+		</section>
+
+		<section id="logs" hidden>
+			<h1>Logs</h1>
+			<div class="row">
+				<label class="muted" for="log-target">of</label>
+				<select id="log-target"><option value="site">site</option><option value="caddy">caddy / proxy</option><option value="tunnel">tunnel</option><option value="db">database</option></select>
+				<label class="muted" for="log-n">last</label>
+				<select id="log-n"><option>100</option><option>300</option><option>1000</option></select>
+				<span class="muted">lines</span>
+				<label class="muted" for="log-since">since</label>
+				<input id="log-since" placeholder="15m" style="width:70px" autocomplete="off" title="only lines newer than this: 15m, 2h, 1d — blank for no limit">
+				<button class="act" id="btnLogShow">show</button>
+				<button class="act" id="btnLogFollow">follow</button>
+				<button class="act danger" id="btnLogStop" disabled title="stop following">stop</button>
+			</div>
+			<div class="status" id="logs-status" aria-live="polite"></div>
+			<pre class="out" id="logs-out" style="max-height:72vh" data-empty="Logs appear here."></pre>
+		</section>
+
+		<section id="actions" hidden>
+			<h1>Actions</h1>
+			<div class="row" id="act-row">
+				<button class="act" id="btnDeploy" title="fa deploy — pull the latest commit, rebuild, restart, health-check; rolls back if the new build does not come up">deploy</button>
+				<button class="act" id="btnRestart" title="fa restart — restart the site container; a changed .env takes effect">restart</button>
+				<button class="act" id="btnUpdate" title="fa update — what a deploy would pull; changes nothing">check for new commits</button>
+				<button class="act" id="btnBackup" title="fa backup — a quick tarball on the server itself, before a risky change">backup on server</button>
+				<button class="act" id="btnPull" title="fa pull — database copy and media mirror onto this computer: the backup that matters">pull to this computer</button>
+				<button class="act danger" id="btnActStop" disabled title="stop the running action">stop</button>
+			</div>
+			<p class="muted">deploy = pull the latest commit, rebuild, restart · restart = apply changed settings · a run keeps going if you close this page, and is shown again when you come back.</p>
+			<div class="status" id="act-status" aria-live="polite"></div>
+			<pre class="out" id="act-out" style="max-height:68vh" data-empty="Output from a run appears here."></pre>
+		</section>
+
+		<section id="backups" hidden>
+			<h1>Backups</h1>
+			<div class="sub">Copies of the database and every photo, recording and video, kept off this server with restic.</div>
+			<div class="status" id="bak-load" aria-live="polite"></div>
+
+			<!-- not set up yet: the one form that gets it going -->
+			<div class="card" id="bak-setup" hidden>
+				<h2>Set up backups</h2>
+				<p class="card-note" id="bak-setup-note">Say where the backups go. Anything restic can write to works. The server makes a password for the backups; you will be shown where it is and must keep a copy.</p>
+				<div id="bak-missing"></div>
+				<div id="bak-new-dest"></div>
+				<div class="row" id="bak-setup-row"><button class="act primary" id="btnBakSetup">set up backups</button></div>
+			</div>
+
+			<div id="bak-main" hidden>
+				<div class="card">
+					<h2>Now <small id="bak-when"></small><button class="act" id="btnBakRefresh">refresh</button></h2>
+					<div class="stats" id="bak-stats"></div>
+					<div class="row" id="bak-run-row">
+						<button class="act primary" id="btnBakRun" title="fa backups run: only what changed since the last one is uploaded">back up now</button>
+						<button class="act danger" id="btnBakStop" disabled title="stop the running backup or restore">stop</button>
+					</div>
+					<div class="status" id="bak-status" aria-live="polite"></div>
+					<pre class="out" id="bak-out" style="max-height:44vh" data-empty="Output from a backup or a restore appears here."></pre>
+				</div>
+
+				<div class="card">
+					<h2>Snapshots <small id="bak-count"></small></h2>
+					<p class="card-note">Each is the whole site at that moment. Restoring one stops the site, moves today's data aside (it is not deleted), puts the snapshot in its place and starts the site again.</p>
+					<div id="bak-snaps"></div>
+				</div>
+
+				<div class="card">
+					<h2>Automatic backups</h2>
+					<p class="card-note">Runs on the server by itself, once a day. Times are the server's clock.</p>
+					<div class="row">
+						<label class="muted" for="bak-time">every day at</label>
+						<input id="bak-time" type="time" style="width:120px">
+						<label class="muted"><input type="checkbox" id="bak-off"> off</label>
+						<button class="act" id="btnBakSched">save schedule</button>
+					</div>
+					<div class="row" id="bak-keep-row">
+						<span class="muted">keep</span>
+						<input id="bak-daily" type="number" min="0" max="999" style="width:70px" aria-label="daily snapshots to keep"><span class="muted">daily</span>
+						<input id="bak-weekly" type="number" min="0" max="999" style="width:70px" aria-label="weekly snapshots to keep"><span class="muted">weekly</span>
+						<input id="bak-monthly" type="number" min="0" max="999" style="width:70px" aria-label="monthly snapshots to keep"><span class="muted">monthly</span>
+						<button class="act" id="btnBakKeep">save</button>
+					</div>
+					<div class="status" id="bak-sched-status" aria-live="polite"></div>
+				</div>
+
+				<div class="card env">
+					<h2>Where they go</h2>
+					<p class="card-note" id="bak-dest-note">One destination and one password for every site on this server.</p>
+					<div class="row" id="bak-repo-row"><code id="bak-repo"></code><button class="act" id="btnBakRepo">change where they go…</button></div>
+					<div id="bak-dest-form" hidden>
+						<div id="bak-dest-pick"></div>
+						<div class="row"><button class="act primary" id="btnBakDestSave">save and check it</button><button class="act" id="btnBakDestCancel">cancel</button></div>
+					</div>
+					<div id="bak-env"></div>
+					<div class="row"><input id="bak-env-key" placeholder="AWS_ACCESS_KEY_ID" autocomplete="off" style="width:230px" aria-label="name of a key"><span class="reveal" style="display:inline-flex;gap:6px"><input id="bak-env-val" type="password" autocomplete="new-password" placeholder="value (blank removes it)" style="width:240px" aria-label="its value"><button class="act mini" data-reveal aria-label="show what is typed">show</button></span><button class="act" id="btnBakEnv">save key</button></div>
+					<div class="status" id="bak-dest-status" aria-live="polite"></div>
+				</div>
+			</div>
+		</section>
+
+		<section id="settings" hidden>
+			<h1>Settings</h1>
+			<div class="card env">
+				<h2>.env on the server <button class="act" id="btnEnv">show .env</button></h2>
+				<p class="card-note">The site's configuration: passwords, tokens, paths. Read and written over ssh; secrets come back masked and are typed blind unless you ask to see them.</p>
+				<div class="status" id="env-status" aria-live="polite"></div>
+				<div id="envbox" hidden></div>
+				<pre class="out" id="env-out" hidden data-empty=""></pre>
+			</div>
+			<div class="card">
+				<h2>Phone app</h2>
+				<p class="card-note">The capture app signs in with <code>CAPTURE_API_TOKEN</code>. Rotating it makes a new one and restarts the site; the app stops syncing until you paste the new token into its Settings.</p>
+				<div class="row" id="token-row"><button class="act danger" id="btnToken">rotate phone-app token</button></div>
+				<div class="status" id="token-status" aria-live="polite"></div>
+				<pre class="out" id="token-out" hidden data-empty=""></pre>
+			</div>
+			<div class="card">
+				<h2>fa itself <small id="upd-ver"></small></h2>
+				<p class="card-note">Pulls the latest source into the checkout on this computer, builds fa, and replaces it here and on this server, so both are the same version. Then this page restarts. Needs Go on this computer; the server needs nothing.</p>
+				<div class="row" id="upd-row"><button class="act" id="btnUpd">update fa</button><label class="muted"><input type="checkbox" id="upd-nopull"> build what is in the checkout now, without pulling</label></div>
+				<div class="status" id="upd-status" aria-live="polite"></div>
+				<pre class="out" id="upd-out" hidden data-empty=""></pre>
+			</div>
+			<div class="card">
+				<h2>This server</h2>
+				<p class="card-note">How this page reaches it. Changing these changes only the list on this computer.</p>
+				<div class="row" id="host-row"><button class="act" id="btnEditHost">edit connection</button><button class="act danger" id="btnRemoveHost">remove from list</button></div>
+			</div>
+		</section>
+	</main>
+</div>
+
+<script>
+(() => {
+const token = new URLSearchParams(location.search).get('t');
+const H = { 'X-FA-Token': token };
+const TABS = ['overview', 'logs', 'actions', 'backups', 'settings'];
+let hosts = [], cur = null;
+const health = {};   // host name → ok | warn | bad, as last seen this session
+const incoming = {}; // host name → commits a deploy would pull, as last checked
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const api = (path, opts={}) => fetch(path, { ...opts, headers: { ...H, ...(opts.headers||{}) } }).then(r => r.ok ? r.json() : r.text().then(t => Promise.reject(new Error(t.trim() || r.statusText))));
+const post = (path, body, method='POST') => api(path, { method, body: body == null ? undefined : JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+const q = (cmd, extra={}) => new URLSearchParams({ host: cur.name, cmd, t: token, ...extra }).toString();
+const store = { get: k => { try { return localStorage.getItem('fa.' + k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem('fa.' + k, v); } catch {} } };
+const say = (id, text, err) => { const el = $(id); el.textContent = text || ''; el.className = 'status' + (err ? ' err' : ''); };
+
+// ---- asking in place --------------------------------------------------------
+// Instead of the browser's own confirm() or a modal: the question appears
+// beside the button that raised it, says what will happen, and its button
+// names the action. Resolves true or false; opening another cancels the first.
+let closeAsk = null;
+const askInline = (after, { title, lines = [], list = [], yes, danger = false }) => new Promise(resolve => {
+	closeAsk?.();
+	const box = document.createElement('div');
+	box.className = 'confirmbox' + (danger ? ' danger' : '');
+	box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-label', title);
+	box.innerHTML = `<div class="ctitle">${esc(title)}</div>${lines.filter(Boolean).map(l => `<p>${esc(l)}</p>`).join('')}` +
+		(list.length ? `<ul>${list.map(l => `<li>${esc(l)}</li>`).join('')}</ul>` : '') +
+		`<div class="row" style="margin:8px 0 0"><button class="act ${danger ? 'danger' : 'primary'}" data-a="yes">${esc(yes)}</button><button class="act" data-a="no">cancel</button></div>`;
+	after.after(box);
+	const done = v => { if (closeAsk !== cancel) return; closeAsk = null; box.remove(); resolve(v); };
+	const cancel = () => done(false);
+	closeAsk = cancel;
+	box.querySelector('[data-a=yes]').onclick = () => done(true);
+	box.querySelector('[data-a=no]').onclick = cancel;
+	box.onkeydown = e => { if (e.key === 'Escape') cancel(); };
+	box.querySelector('[data-a=yes]').focus();
+	box.scrollIntoView({ block: 'nearest' });
+});
+
+// a secret is typed blind unless you ask to see it: "show" beside the field
+document.addEventListener('click', e => {
+	const b = e.target.closest('[data-reveal]'); if (!b) return;
+	const inp = b.parentElement.querySelector('input'); if (!inp) return;
+	const hidden = inp.type === 'password';
+	inp.type = hidden ? 'text' : 'password'; b.textContent = hidden ? 'hide' : 'show';
+	b.setAttribute('aria-label', hidden ? 'hide what is typed' : 'show what is typed');
+});
+
+// ---- consoles ---------------------------------------------------------------
+// The panes run independently, so a log follow can stream while a deploy
+// runs. Each keeps its earlier runs: a run starts under a rule, not on a
+// blank page. While a pane is busy its buttons are off and its stop is on.
+//
+// Two kinds of run. A log follow and the token rotation are tied to this
+// page (stream): leave and they end. Everything in Actions, and the restart
+// after a settings change, is a job that belongs to fa itself (startJob):
+// close the tab and the deploy carries on; come back and the page is replayed
+// what it missed.
+const PANES = {
+	act:   { out: 'act-out',   status: 'act-status',   stop: 'btnActStop', buttons: ['btnDeploy', 'btnRestart', 'btnUpdate', 'btnBackup', 'btnPull'], flag: 'flag-actions' },
+	logs:  { out: 'logs-out',  status: 'logs-status',  stop: 'btnLogStop', buttons: [], flag: 'flag-logs' },
+	env:   { out: 'env-out',   status: 'env-status',   buttons: ['btnEnv'] },
+	token: { out: 'token-out', status: 'token-status', buttons: ['btnToken'] },
+	upd:   { out: 'upd-out',   status: 'upd-status',   buttons: ['btnUpd'] },
+	bak:   { out: 'bak-out',   status: 'bak-status',   stop: 'btnBakStop', buttons: ['btnBakRun'], flag: 'flag-backups' },
+};
+const streams = {}; // pane → { es, cmd }
+const colorize = line => {
+	const e = esc(line);
+	if (/^\s*✓/.test(line)) return `<span class="ok">${e}</span>`;
+	if (/^\s*✗|^fa: |error|failed/i.test(line)) return `<span class="bad">${e}</span>`;
+	if (/^\s*!/.test(line)) return `<span class="warn">${e}</span>`;
+	return e;
+};
+const setOut = (id, text) => { $(id).innerHTML = text.replace(/\n+$/, '').split('\n').map(colorize).join('\n'); };
+const append = (pane, line, cls) => {
+	const el = $(PANES[pane].out);
+	const atEnd = el.scrollHeight - el.scrollTop - el.clientHeight < 40; // follow the output only while you are at the bottom of it
+	el.insertAdjacentHTML('beforeend', (cls ? `<span class="${cls}">${esc(line)}</span>` : colorize(line)) + '\n');
+	if (atEnd) el.scrollTop = el.scrollHeight;
+};
+const rule = (pane, label, when) => { const el = $(PANES[pane].out); el.hidden = false; append(pane, `${el.firstChild ? '\n' : ''}── ${label} · ${cur.name} · ${(when || new Date()).toLocaleTimeString()} ──`, 'sep'); el.scrollTop = el.scrollHeight; };
+const setBusy = (pane, b) => {
+	const p = PANES[pane];
+	for (const id of p.buttons) $(id).disabled = b;
+	if (p.stop) $(p.stop).disabled = !b;
+	if (p.flag) { $(p.flag).className = b ? 'flag' : ''; $(p.flag).title = b ? 'running' : ''; }
+};
+const running = () => Object.keys(streams).filter(p => !streams[p].job && streams[p].cmd !== 'logs'); // what leaving the page would end
+
+function stream(pane, cmd, { args = [], confirm = false, then } = {}) {
+	if (!cur) return;
+	stop(pane, true);
+	const p = new URLSearchParams({ host: cur.name, cmd, t: token });
+	for (const a of args) p.append('arg', a);
+	if (confirm) p.set('confirm', 'yes');
+	const label = `fa ${cmd} ${args.join(' ')}`.trim(), host = cur.name;
+	rule(pane, label);
+	const es = new EventSource('/api/stream?' + p);
+	streams[pane] = { es, cmd };
+	setBusy(pane, true); say(PANES[pane].status, `${label}…`);
+	const finish = (text, err) => { es.close(); delete streams[pane]; setBusy(pane, false); say(PANES[pane].status, text, err); };
+	es.onmessage = e => append(pane, JSON.parse(e.data));
+	es.addEventListener('end', e => {
+		const s = JSON.parse(e.data), good = s === 'ok';
+		append(pane, good ? '— done' : '— ' + s, good ? 'sep' : 'bad');
+		finish(good ? `${label} — done` : `${label} failed: ${s}`, !good);
+		if (cmd === 'logs' || !cur || cur.name !== host) return;
+		refresh(); if (cmd === 'deploy' || cmd === 'update') checkUpdate();
+		if (good) then?.();
+	});
+	es.onerror = () => { append(pane, '— connection to fa closed', 'bad'); finish(`${label}: lost the connection to fa — is it still running?`, true); };
+}
+function stop(pane, quiet) {
+	const s = streams[pane]; if (!s) return;
+	if (s.job) { // ask fa to end it; the job's own end event then closes the run on the page
+		say(PANES[pane].status, `stopping fa ${s.cmd}…`);
+		post('/api/stop?' + new URLSearchParams({ host: s.host, ch: pane }), null).catch(e => say(PANES[pane].status, e.message, true));
+		return;
+	}
+	s.es.close(); delete streams[pane]; setBusy(pane, false);
+	append(pane, '— stopped', 'sep');
+	if (!quiet) say(PANES[pane].status, `fa ${s.cmd} stopped`);
+}
+// let go of a job's output without ending the job (the page is moving to another server)
+function detach(pane) { const s = streams[pane]; if (!s) return; s.es.close(); delete streams[pane]; setBusy(pane, false); }
+
+// ---- jobs: runs that outlive the page ----------------------------------------
+async function startJob(pane, cmd, { args = [], confirm = false, then } = {}) {
+	if (!cur || streams[pane]) return;
+	const p = new URLSearchParams({ host: cur.name, ch: pane, cmd });
+	for (const a of args) p.append('arg', a);
+	if (confirm) p.set('confirm', 'yes');
+	let j;
+	try { j = await post('/api/start?' + p, null); }
+	catch (e) { say(PANES[pane].status, e.message, true); return; }
+	follow(pane, j, { then });
+}
+// follow prints a job from its first line: one just started, or one found
+// already there when the page opened. `replayed` marks the second kind, whose
+// end is old news and must not set off a refresh or a follow-up step.
+function follow(pane, j, { then, replayed = false } = {}) {
+	const host = cur.name, label = j.label;
+	rule(pane, label, new Date(j.started));
+	const es = new EventSource('/api/events?' + new URLSearchParams({ host, ch: pane, t: token }));
+	streams[pane] = { es, cmd: j.cmd, job: true, host };
+	// a long job can go a while between lines: keep saying it is alive, and for how long
+	const began = new Date(j.started).getTime() || Date.now();
+	const going = () => { const m = Math.floor((Date.now() - began) / 60000); return `${label}… running${m ? ` for ${m} min` : ''}`; };
+	setBusy(pane, true); say(PANES[pane].status, going());
+	const tick = setInterval(() => { if (streams[pane]?.es !== es) return clearInterval(tick); if (!es.lost) say(PANES[pane].status, going()); }, 20000);
+	es.onmessage = e => { append(pane, JSON.parse(e.data)); if (es.lost) { es.lost = false; say(PANES[pane].status, going()); } };
+	es.addEventListener('end', e => {
+		const s = JSON.parse(e.data), good = s === 'ok', halted = s === 'stopped';
+		append(pane, good ? '— done' : '— ' + s, good || halted ? 'sep' : 'bad');
+		clearInterval(tick); es.close(); delete streams[pane]; setBusy(pane, false);
+		say(PANES[pane].status, good ? `${label} — done` : halted ? `${label} stopped` : `${label} failed: ${s}`, !good && !halted);
+		if (replayed || !cur || cur.name !== host) return;
+		refresh(); if (j.cmd === 'deploy' || j.cmd === 'update') checkUpdate();
+		if (good) (then || (pane === 'bak' ? loadBackups : null))?.(); // a backup found already running still refreshes the list when it ends
+	});
+	// The browser re-opens a dropped connection by itself and fa resumes after
+	// the last line it sent, so nothing is printed twice. The job is unaffected.
+	es.onerror = () => { es.lost = true; say(PANES[pane].status, `${label}: lost the connection to fa — is it still running? Trying again…`, true); };
+}
+// what was started here before this page was looking: running, or the last run finished
+async function adoptJobs() {
+	const host = cur.name;
+	let r; try { r = await api('/api/jobs?' + new URLSearchParams({ host })); } catch { return; }
+	if (!cur || cur.name !== host) return;
+	for (const j of r.jobs || []) if (PANES[j.ch] && !streams[j.ch]) follow(j.ch, j, { replayed: !j.running });
+}
+// closing the page ends what is tied to it (a token rotation): say so before it happens
+window.addEventListener('beforeunload', e => { if (running().length) { e.preventDefault(); e.returnValue = ''; } });
+
+// ---- servers ----------------------------------------------------------------
+const renderHosts = () => {
+	const el = $('hosts'); el.innerHTML = '';
+	for (const h of hosts) {
+		const b = document.createElement('button');
+		const hs = health[h.name];
+		b.innerHTML = `<span class="dot ${hs || ''}" title="${hs ? { ok: 'all checks pass', warn: 'something wants a look', bad: 'a check fails, or the server cannot be reached' }[hs] : 'not checked yet'}"></span>${esc(h.name)}<small>${esc(h.ssh)}${h.dir ? ' · ' + esc(h.dir) : ''}</small>`;
+		b.setAttribute('aria-pressed', !!cur && cur.name === h.name);
+		b.onclick = () => select(h);
+		el.appendChild(b);
+	}
+};
+async function loadHosts(pick) {
+	const r = await api('/api/hosts');
+	hosts = r.hosts; myVersion = r.version; $('ver').textContent = 'fa ' + r.version; $('upd-ver').textContent = 'this computer runs ' + r.version;
+	if (!hosts.length) { cur = null; renderHosts(); for (const s of TABS) $(s).hidden = true; showAdd(); return; }
+	const want = pick || (cur && cur.name) || store.get('host');
+	select(hosts.find(h => h.name === want) || hosts[0], true);
+}
+async function select(h, force) {
+	if (!force && cur && cur.name === h.name) return;
+	if (cur && cur.name !== h.name && running().length) {
+		const what = running().map(p => 'fa ' + streams[p].cmd).join(', ');
+		if (!await askInline($('hosts'), { title: `Switch to ${h.name}?`, yes: `stop it and switch`, danger: true, lines: [`${what} is still running on ${cur.name}. Switching servers stops it.`] })) return;
+	}
+	// jobs keep running on the server you leave, and are picked up again when you come back
+	for (const p in streams) streams[p].job ? detach(p) : stop(p, true);
+	closeAsk?.();
+	const changed = !cur || cur.name !== h.name;
+	cur = h; store.set('host', h.name); renderHosts(); hideAdd();
+	$('h-name').textContent = h.name; $('h-ssh').textContent = h.ssh + (h.dir ? '  --dir ' + h.dir : '');
+	if (changed) { // another server's answers must not sit under this one's name
+		for (const id of ['status-out', 'doctor-out', 'disk-out']) $(id).innerHTML = '';
+		$('stats').hidden = true; $('update-banner').innerHTML = ''; $('status-when').textContent = '';
+		closeEnv(); for (const p of ['env', 'token']) { $(PANES[p].out).hidden = true; $(PANES[p].out).innerHTML = ''; say(PANES[p].status, ''); }
+		for (const p of ['act', 'logs', 'bak']) { $(PANES[p].out).innerHTML = ''; say(PANES[p].status, ''); }
+		resetBackups();
+		$('fa-banner').innerHTML = '';
+	}
+	showTab(store.get('tab') || 'overview');
+	if (changed) adoptJobs();
+	refresh(); checkUpdate(); checkVersion();
+}
+function showTab(name) {
+	if (!cur) return;
+	if (!TABS.includes(name)) name = 'overview';
+	store.set('tab', name);
+	for (const b of document.querySelectorAll('#tabs button')) b.setAttribute('aria-pressed', b.dataset.tab === name);
+	for (const s of TABS) $(s).hidden = s !== name;
+	if (name === 'backups' && !bak.loaded) loadBackups();
+}
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { hideAdd(); showTab(b.dataset.tab); });
+
+// the add / edit form
+let editing = null;
+function showAdd(edit) {
+	editing = edit || null;
+	$('addhost').hidden = false;
+	for (const s of TABS) $(s).hidden = true;
+	$('addhost-title').textContent = editing ? `Connection to ${editing.name}` : hosts.length ? 'Add a server' : 'Add your first server';
+	$('addhost-note').textContent = editing ? 'Where this page finds the server. Nothing on the server changes.' : 'A machine with fa installed that you can already ssh to — the same thing you would give ssh. Nothing is changed on it by adding it here.';
+	$('add-ssh').value = editing?.ssh || ''; $('add-name').value = editing?.name || ''; $('add-dir').value = editing?.dir || '';
+	$('add-name').disabled = !!editing; // the name is how the list knows it; remove and add to rename
+	$('add-save').textContent = editing ? 'save' : 'add server';
+	$('add-cancel').hidden = !hosts.length;
+	say('add-status', ''); $('add-ssh').focus();
+}
+function hideAdd() { $('addhost').hidden = true; editing = null; }
+$('btnAddHost').onclick = () => showAdd();
+$('add-cancel').onclick = () => { hideAdd(); if (cur) showTab(store.get('tab') || 'overview'); };
+const saveHost = async () => {
+	const ssh = $('add-ssh').value.trim();
+	if (!ssh) { say('add-status', 'type the ssh target first: user@host, or an alias from ~/.ssh/config', true); $('add-ssh').focus(); return; }
+	const name = editing ? editing.name : ($('add-name').value.trim() || ssh.split('@').pop());
+	if (!editing && hosts.some(h => h.name === name)) { say('add-status', `there is already a server called ${name} — give this one another name`, true); $('add-name').focus(); return; }
+	try { await post('/api/hosts', { name, ssh, dir: $('add-dir').value.trim() }); }
+	catch (e) { say('add-status', e.message, true); return; }
+	cur = null; await loadHosts(name);
+};
+$('add-save').onclick = saveHost;
+$('addhost').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('input')) saveHost(); });
+$('btnEditHost').onclick = () => showAdd(cur);
+$('btnRemoveHost').onclick = async () => {
+	if (!cur || !await askInline($('host-row'), { title: `Remove ${cur.name} from the list?`, yes: 'remove from list', danger: true, lines: ['Only this computer forgets it. Nothing on the server changes, and you can add it again.'] })) return;
+	for (const p in streams) streams[p].job ? detach(p) : stop(p, true);
+	await api('/api/hosts?name=' + encodeURIComponent(cur.name), { method: 'DELETE' });
+	delete health[cur.name]; cur = null; store.set('host', ''); loadHosts();
+};
+
+// ---- overview ---------------------------------------------------------------
+async function runInto(cmd, outId, btnId) {
+	const host = cur.name;
+	$(outId).innerHTML = 'running<span class="spinner"></span>';
+	if (btnId) $(btnId).disabled = true;
+	let r;
+	try { r = await api('/api/run?' + q(cmd)); }
+	catch (e) { r = { output: '', ok: false, error: e.message }; }
+	if (btnId) $(btnId).disabled = false;
+	if (!cur || cur.name !== host) return null; // the answer belongs to a server you have left
+	setOut(outId, (r.output || '') + (r.ok ? '' : `\nfa: ${cmd} did not finish${r.error ? ' — ' + r.error : ''}`));
+	return r;
+}
+// `fa status` is text for a terminal. The tiles are read out of it and shown
+// only where a line is recognised, so an older fa on the server loses a tile,
+// not the page; the full output always stays underneath.
+const tile = (value, label, cls = '') => `<div class="stat ${cls}"><b title="${esc(value)}">${esc(value)}</b><span>${esc(label)}</span></div>`;
+function renderStats(out) {
+	const lines = out.split('\n'), find = re => { for (const l of lines) { const m = l.match(re); if (m) return m; } return null; };
+	const mark = m => !m ? '' : /✗/.test(m[0]) ? 'bad' : /^\s*!/.test(m[0]) ? 'warn' : '';
+	let t = '';
+	const site = find(/^\s*[✓✗]\s+site answers on/);
+	if (site) t += tile(mark(site) ? 'down' : 'up', 'the site', mark(site));
+	const disk = find(/^\s*[✓✗!]\s+data disk: (.+?) free of (.+?) \((\d+)% used\)/);
+	if (disk) t += tile(disk[1], `free · ${disk[3]}% used`, mark(disk));
+	const media = find(/^\s*[✓✗!]\s+media: (\d+) files, (.+)$/);
+	if (media) t += tile(media[2], `media · ${media[1]} files`);
+	const db = find(/^\s*[✓✗!]\s+sqlite: (.+)$/);
+	if (db) t += tile(db[1], 'database');
+	// the off-site backup is the one that counts; the tarball on the server only stands in when there is no other
+	const off = find(/^\s*[✓!]\s+off-site backup (\d+[mhd]) ago/), offNone = find(/no off-site backup yet/), offBad = find(/off-site backup failed/);
+	const bk = find(/^\s*[✓✗!]\s+last backup (\S+) ago/), nobk = find(/no backups yet/);
+	if (off) t += tile(off[1].replace(/(\d+)([mhd])/, '$1 $2'), 'since off-site backup', mark(off));
+	else if (offBad) t += tile('FAILED', 'off-site backup', 'bad');
+	else if (offNone) t += tile('never', 'off-site backup', 'warn');
+	else if (bk) { const h = +(bk[1].match(/(\d+)h/) || [0, 0])[1]; t += tile(h >= 48 ? `${Math.round(h / 24)} d` : `${h} h`, 'since backup on server', mark(bk)); }
+	else if (nobk) t += tile('never', 'backup', 'warn');
+	const commit = find(/^commit\s+(\S+)/);
+	if (commit) t += tile(commit[1].slice(0, 9), 'commit running');
+	$('stats').innerHTML = t; $('stats').hidden = !t;
+}
+async function refresh() {
+	if (!cur) return;
+	const host = cur.name, r = await runInto('status', 'status-out', 'btnRefresh');
+	if (!r) return;
+	const out = r.output || '', n = re => (out.match(re) || []).length;
+	health[host] = !r.ok || n(/^\s*✗/gm) ? 'bad' : n(/^\s*!/gm) ? 'warn' : 'ok';
+	renderHosts(); renderStats(out);
+	$('status-when').textContent = 'checked ' + new Date().toLocaleTimeString();
+	$('flag-overview').className = health[host] === 'ok' ? '' : 'flag';
+	$('flag-overview').title = health[host] === 'ok' ? '' : 'a status check wants a look';
+}
+// Refresh means "look again at everything on this card": the running state
+// and whether anything newer has been pushed. (It used to re-run only the
+// status, so a push made while the page was open never showed up.)
+$('btnRefresh').onclick = () => { refresh(); checkUpdate(); };
+$('btnDoctor').onclick = () => runInto('doctor', 'doctor-out', 'btnDoctor');
+$('btnDisk').onclick = () => runInto('disk', 'disk-out', 'btnDisk');
+
+// ---- is the server up to date with what is pushed? ---------------------------
+// `fa update` fetches and lists what a deploy would pull, changing nothing.
+// When there is something, the page says so and deploy becomes the filled button.
+async function checkUpdate() {
+	if (!cur) return;
+	const host = cur.name, box = $('update-banner');
+	// Say so while the fetch runs, so an old "up to date" line isn't taken for the answer.
+	if (!box.querySelector('[data-x=deploy]')) box.innerHTML = '<div class="banner quiet">checking for newer commits…</div>';
+	let r; try { r = await api('/api/run?' + q('update')); } catch { r = { ok: false, output: '' }; }
+	if (!cur || cur.name !== host) return;
+	const lines = (r.output || '').split('\n'), at = lines.findIndex(l => /^incoming:/.test(l));
+	const commits = at < 0 ? [] : lines.slice(at + 1).filter(l => /^\s+\S/.test(l)).map(l => l.trim());
+	incoming[host] = commits;
+	const same = (r.output || '').match(/already at (\S+)/);
+	if (commits.length) {
+		box.innerHTML = `<div class="banner">${commits.length} commit${commits.length === 1 ? ' is' : 's are'} pushed but not deployed. <button class="act primary" data-x="deploy">deploy now</button><ul>${commits.slice(0, 8).map(c => `<li>${esc(c)}</li>`).join('')}${commits.length > 8 ? `<li>… and ${commits.length - 8} more</li>` : ''}</ul></div>`;
+		box.querySelector('[data-x=deploy]').onclick = () => { showTab('actions'); $('btnDeploy').click(); };
+	} else box.innerHTML = same ? `<div class="banner quiet">running ${esc(same[1])} · up to date with what is pushed</div>` : `<div class="banner quiet">could not check for newer commits</div>`;
+	$('btnDeploy').classList.toggle('primary', commits.length > 0);
+}
+
+// ---- is the server's fa the one this page was written for? --------------------
+// Every button runs `fa …` on the server, so a button newer than the fa
+// installed there fails with a usage line. Say so before it is pressed.
+let myVersion = '';
+async function checkVersion() {
+	if (!cur) return;
+	const host = cur.name, box = $('fa-banner');
+	let r; try { r = await api('/api/run?' + q('version')); } catch { return; }
+	if (!cur || cur.name !== host) return;
+	const theirs = ((r.output || '').match(/^fa (\S+)\s*$/m) || [])[1];
+	if (!theirs) {
+		box.innerHTML = /not found|exit status 127/.test((r.output || '') + (r.error || '')) ? `<div class="banner">fa is not installed on ${esc(host)}, so nothing here can run. Install it there first (the README has the one-line download).</div>` : '';
+		return;
+	}
+	box.innerHTML = theirs === myVersion ? '' : theirs === 'dev' || myVersion === 'dev'
+		? `<div class="banner quiet">the server runs fa ${esc(theirs)} · this page is fa ${esc(myVersion)}</div>`
+		: `<div class="banner">The server runs fa ${esc(theirs)}; this page is fa ${esc(myVersion)}. A button the other does not know fails with a usage line. Settings → “update fa” makes them the same.</div>`;
+}
+
+// ---- logs -------------------------------------------------------------------
+const startLogs = follow => {
+	const since = $('log-since').value.trim();
+	if (since && !/^\d+[smhd]?$/.test(since)) { say('logs-status', 'since is a length of time: 15m, 2h, 1d', true); $('log-since').focus(); return; }
+	// docker counts in s, m and h; a day is 24 of them
+	const dur = since.endsWith('d') ? parseInt(since) * 24 + 'h' : since;
+	stream('logs', 'logs', { args: [$('log-target').value, '-n', $('log-n').value, ...(dur ? ['--since', dur] : []), ...(follow ? ['-f'] : [])] });
+};
+$('btnLogShow').onclick = () => startLogs(false);
+$('btnLogFollow').onclick = () => startLogs(true);
+$('btnLogStop').onclick = () => stop('logs');
+
+// ---- actions ----------------------------------------------------------------
+$('btnDeploy').onclick = async () => {
+	const c = incoming[cur.name] || [];
+	if (await askInline($('act-row'), { title: `Deploy on ${cur.name} now?`, yes: 'deploy',
+		lines: [c.length ? `Pulls ${c.length} commit${c.length === 1 ? '' : 's'}, rebuilds the image and restarts:` : 'Nothing new is pushed; this rebuilds from the commit already there and restarts.', 'If the new build does not come up, fa puts the previous one back.'],
+		list: c.slice(0, 8).concat(c.length > 8 ? [`… and ${c.length - 8} more`] : []) })) startJob('act', 'deploy', { confirm: true });
+};
+$('btnRestart').onclick = async () => {
+	if (await askInline($('act-row'), { title: `Restart the site on ${cur.name}?`, yes: 'restart', lines: ['The site container restarts: a few seconds of downtime.', 'Nothing is pulled or rebuilt.'] })) startJob('act', 'restart', { confirm: true });
+};
+$('btnUpdate').onclick = () => startJob('act', 'update');
+$('btnBackup').onclick = () => startJob('act', 'backup');
+$('btnPull').onclick = () => startJob('act', 'pull');
+$('btnActStop').onclick = () => stop('act');
+
+// ---- backups ----------------------------------------------------------------
+// Off-server backups: `fa backups` on the server, which drives restic through
+// resticprofile. The page reads the settings and the snapshot list as JSON
+// (fa prints one line of it) and changes one setting at a time. A backup and
+// a restore are jobs, like a deploy: they carry on if the tab closes.
+const bak = { loaded: false, info: null, snaps: [] };
+let newDest = null, changeDest = null; // the two destination choosers: first setup, and a later change
+const jsonFrom = out => { const i = out.search(/[\[{]/); if (i < 0) throw new Error(out.trim() || 'no answer'); return JSON.parse(out.slice(i)); };
+const bytes = n => { if (!n) return ''; const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0; while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; } return (n >= 10 || i === 0 ? Math.round(n) : n.toFixed(1)) + ' ' + u[i]; };
+const ago = d => { const m = Math.round((Date.now() - d) / 60000); return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 48 * 60 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} days ago`; };
+function resetBackups() {
+	bak.loaded = false; bak.info = null; bak.snaps = [];
+	$('bak-setup').hidden = true; $('bak-main').hidden = true; say('bak-load', '');
+}
+// What each storage provider calls these, since their pages rarely use restic's names.
+const KEY_HINTS = {
+	B2_ACCOUNT_ID: 'Backblaze calls this keyID',
+	B2_ACCOUNT_KEY: 'Backblaze calls this applicationKey. It is shown once, when the key is created; make a new key if you did not copy it',
+	AWS_ACCESS_KEY_ID: 'the Access Key ID (R2 and Spaces use that name; on Backblaze\'s S3 side it is keyID)',
+	AWS_SECRET_ACCESS_KEY: 'the Secret Access Key, shown once when the key is created (Backblaze: applicationKey)',
+	AZURE_ACCOUNT_NAME: 'the storage account\'s name',
+	AZURE_ACCOUNT_KEY: 'one of the storage account\'s two access keys',
+	RESTIC_REST_USERNAME: 'the user name the REST server expects',
+	RESTIC_REST_PASSWORD: 'that user\'s password',
+};
+const ADDRESS_HINTS = [
+	[/^b2:/, 'Backblaze: b2:<bucketName>:<folder>. bucketName is the bucket\'s name as Backblaze lists it; the folder is any name you like, for example restic. keyName is not needed.'],
+	[/^s3:/, 'S3: s3:https://<endpoint>/<bucket>/<folder>. The endpoint is the host your provider gives (R2: <account id>.r2.cloudflarestorage.com · Spaces: nyc3.digitaloceanspaces.com); the folder is any name you like.'],
+	[/^sftp:/, 'SFTP: sftp:user@host:/path. No keys to enter: this server\'s own ssh key must already be accepted on that machine.'],
+	[/^rest:/, 'REST server: rest:https://host:8000/<repo>.'],
+	[/^azure:/, 'Azure: azure:<container>:/<folder>.'],
+	[/^\//, 'A folder on this server. Only as safe as the disk it is on: use a different disk from the site\'s.'],
+	[/./, 'This has no kind in front (s3:, b2:, sftp:, rest:) and does not begin with /, so it would become a folder on the server, not a place off it. For S3-style storage write s3:https://<host>/<bucket>/<folder>.'],
+];
+const addressHint = v => (ADDRESS_HINTS.find(([re]) => re.test(v.trim())) || [null, ''])[1];
+const envRow = (k = '', v = '') => `<div class="bak-env-row" style="margin:6px 0"><div class="row" style="margin:0"><input placeholder="AWS_ACCESS_KEY_ID" value="${esc(k)}" autocomplete="off" style="width:230px" aria-label="name of a key"><span class="reveal" style="display:inline-flex;gap:6px"><input type="password" autocomplete="new-password" value="${esc(v)}" placeholder="value" style="width:260px" aria-label="its value"><button class="act mini" data-reveal aria-label="show what is typed">show</button></span></div>${KEY_HINTS[k] ? `<div class="muted" style="font-size:12px;margin-top:2px">${esc(KEY_HINTS[k])}</div>` : ''}</div>`;
+// The keys a destination needs, offered as soon as its kind is recognisable.
+// ---- where the backups go: one form per kind of storage ----------------------
+// Each asks for what that provider's own pages show, under the names they
+// use, and builds restic's address from the answers. An address typed by hand
+// is how a bare host name got saved once, which restic takes for a folder on
+// the server.
+const bare = v => String(v ?? '').trim();
+const hostOf = v => bare(v).replace(/^s3:/i, '').replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+const pathPart = v => bare(v).replace(/^\/+|\/+$/g, '');
+const s3Dest = (host, f) => ({ repo: `s3:https://${host}/${pathPart(f.bucket)}/${pathPart(f.folder) || 'restic'}`, env: { AWS_ACCESS_KEY_ID: bare(f.id), AWS_SECRET_ACCESS_KEY: bare(f.secret) } });
+const FOLDER = ['folder', 'folder in the bucket', 'restic', false, 'any name; it is made for you'];
+// a field: [name, the label as the provider shows it, placeholder, secret?, hint]
+const DESTS = [
+	// REVISIT (noted 2026-11-19): restic's documentation warns against its native B2
+	// backend ("issues with error handling in the current B2 library") and recommends
+	// Backblaze's S3-compatible API: doc/030_preparing_a_new_repo.rst, "Backblaze B2".
+	// When that warning is gone from restic's docs, remove the two dated notes below
+	// and the "(what restic recommends)" from the first name; native B2 then becomes
+	// the plain choice.
+	{ id: 'b2', name: 'Backblaze B2, through its S3 address (what restic recommends)', note: 'As of 19 November 2026 this is the way restic\'s documentation recommends for Backblaze. All four are on Backblaze: Endpoint and bucketName on the bucket, keyID and applicationKey on the application key (give the key read and write access to the bucket). One thing to set on Backblaze with this choice: in the bucket\'s Lifecycle Settings pick “Keep only the last version of the file”. Through the S3 address, data that old snapshots free up is only hidden, and that setting is what actually removes it.',
+		fields: [['endpoint', 'Endpoint', 's3.us-west-001.backblazeb2.com', false, 'on the bucket, under its name'], ['bucket', 'bucketName', ''], ['id', 'keyID', ''], ['secret', 'applicationKey', '', true, 'shown once, when the key is created: make a new key if you did not copy it'], FOLDER],
+		check: f => /^[a-z0-9.-]+\.[a-z]+$/i.test(hostOf(f.endpoint)) ? '' : 'Endpoint is a host name, like s3.us-west-001.backblazeb2.com',
+		build: f => s3Dest(hostOf(f.endpoint), f) },
+	{ id: 'b2native', name: 'Backblaze B2, native B2 API', note: 'Backblaze\'s own API: no Endpoint to enter, and data that old snapshots free up is deleted outright. Reliability note, as of 19 November 2026: restic\'s documentation recommends the S3 choice above instead, because of error-handling problems in the B2 library restic uses (a stalled connection can hang a backup). Both work; this is the simpler one to set up.',
+		fields: [['bucket', 'bucketName', ''], ['id', 'keyID', ''], ['secret', 'applicationKey', '', true, 'shown once, when the key is created: make a new key if you did not copy it'], FOLDER],
+		build: f => ({ repo: `b2:${pathPart(f.bucket)}:${pathPart(f.folder) || 'restic'}`, env: { B2_ACCOUNT_ID: bare(f.id), B2_ACCOUNT_KEY: bare(f.secret) } }) },
+	{ id: 'r2', name: 'Cloudflare R2', note: 'A private bucket, and an API token with Object Read & Write on it: use the two values in the token\'s S3 section.',
+		fields: [['account', 'Account ID', '', false, 'on the R2 overview page'], ['bucket', 'bucket name', ''], ['id', 'Access Key ID', ''], ['secret', 'Secret Access Key', '', true, 'shown once, when the token is created'], FOLDER],
+		build: f => s3Dest(`${hostOf(f.account).replace(/\.r2\.cloudflarestorage\.com$/i, '')}.r2.cloudflarestorage.com`, f) },
+	{ id: 'spaces', name: 'DigitalOcean Spaces', note: 'A Space, and a Spaces access key (API → Spaces Keys).',
+		fields: [['region', 'region', 'nyc3', false, 'the datacenter the Space is in'], ['bucket', 'Space name', ''], ['id', 'access key', ''], ['secret', 'secret key', '', true, 'shown once, when the key is created'], FOLDER],
+		build: f => s3Dest(`${hostOf(f.region).replace(/\.digitaloceanspaces\.com$/i, '')}.digitaloceanspaces.com`, f) },
+	{ id: 's3', name: 'Other S3-compatible storage',
+		fields: [['endpoint', 'endpoint', 's3.example.com', false, 'the host name your provider gives'], ['bucket', 'bucket', ''], ['id', 'access key ID', ''], ['secret', 'secret access key', '', true], FOLDER],
+		check: f => /\./.test(hostOf(f.endpoint)) ? '' : 'the endpoint is a host name, like s3.example.com',
+		build: f => s3Dest(hostOf(f.endpoint), f) },
+	{ id: 'sftp', name: 'Another machine, over ssh', note: 'No keys to enter: the server\'s own ssh key must already be accepted on that machine.',
+		fields: [['target', 'user@host', 'tony@backup-box'], ['path', 'folder there', '/srv/backups']],
+		check: f => /^[^@\s]+@[^@\s:]+$/.test(bare(f.target)) ? '' : 'user@host, like tony@backup-box',
+		build: f => ({ repo: `sftp:${bare(f.target)}:/${pathPart(f.path)}`, env: {} }) },
+	{ id: 'dir', name: 'A folder on this server', note: 'Only as safe as the disk it is on: use a different disk from the site\'s, never the same one.',
+		fields: [['path', 'full path', '/mnt/other-disk/backups']],
+		build: f => ({ repo: '/' + pathPart(f.path), env: {} }) },
+	{ id: 'raw', name: 'Something else (a restic address)', raw: true, note: 'Anything restic can write to, as restic writes it.' },
+];
+// destForm draws the chooser into box and returns { read() }, which gives
+// { repo, env } or throws with what is missing. `first` are choices that need
+// no fields (the place another site already uses, say): { id, name, note, fixed }.
+function destForm(box, first = []) {
+	const list = [...first, ...DESTS];
+	box.innerHTML = `<div class="row"><select data-d="kind" aria-label="where the backups go">${list.map(d => `<option value="${d.id}">${esc(d.name)}</option>`).join('')}</select></div><p class="card-note" data-d="note"></p><div data-d="fields"></div><p class="card-note" data-d="preview" aria-live="polite"></p>`;
+	const sel = box.querySelector('[data-d=kind]'), fields = box.querySelector('[data-d=fields]');
+	const picked = () => list.find(d => d.id === sel.value);
+	const read = () => {
+		const d = picked();
+		if (d.fixed) return d.fixed;
+		if (d.raw) {
+			const repo = bare(fields.querySelector('[data-f=address]').value), env = {};
+			for (const row of fields.querySelectorAll('.bak-env-row')) { const [k, v] = [...row.querySelectorAll('input')].map(i => i.value); if (bare(k) && v) env[bare(k)] = v; }
+			if (!repo) throw new Error('enter the address');
+			const hint = addressHint(repo); if (/no kind in front/.test(hint)) throw new Error(hint);
+			return { repo, env };
+		}
+		const f = Object.fromEntries([...fields.querySelectorAll('[data-f]')].map(i => [i.dataset.f, i.value]));
+		for (const [key, label] of d.fields) if (key !== 'folder' && !bare(f[key])) throw new Error(`${label} is empty`);
+		const wrong = d.check?.(f); if (wrong) throw new Error(wrong);
+		if (f.bucket !== undefined && /[\s/:]/.test(bare(f.bucket))) throw new Error(`${d.fields.find(x => x[0] === 'bucket')[1]} is the bucket's name alone: no spaces, slashes or colons`);
+		return d.build(f);
+	};
+	const preview = () => { let t = ''; try { const r = read(); if (r.repo) t = `Will be saved as  ${r.repo}`; } catch { /* still being filled in */ } box.querySelector('[data-d=preview]').textContent = t; };
+	const draw = () => {
+		const d = picked();
+		box.querySelector('[data-d=note]').textContent = d.note || '';
+		fields.innerHTML = d.fixed ? '' : d.raw
+			? `<div class="row"><input data-f="address" placeholder="b2:bucket:folder · rest:https://host/repo · rclone:remote:path" autocomplete="off" style="width:min(100%, 560px)" aria-label="restic address"></div><div class="muted" style="font-size:12px">keys for it, if it needs any</div>${envRow()}${envRow()}`
+			: d.fields.map(([key, label, ph, secret, hint]) => `<div style="margin:6px 0"><div class="row" style="margin:0"><label class="muted" style="min-width:150px;font-size:13px">${esc(label)}</label>${secret
+				? `<span class="reveal" style="display:inline-flex;gap:6px"><input data-f="${key}" type="password" autocomplete="new-password" style="width:300px" aria-label="${esc(label)}"><button type="button" class="act mini" data-reveal aria-label="show what is typed">show</button></span>`
+				: `<input type="text" data-f="${key}" placeholder="${esc(ph || '')}"${key === 'folder' ? ` value="${esc(ph)}"` : ''} autocomplete="off" style="width:300px" aria-label="${esc(label)}">`}</div>${hint ? `<div class="muted" style="font-size:12px;margin:2px 0 0 158px">${esc(hint)}</div>` : ''}</div>`).join('');
+		preview();
+	};
+	sel.onchange = draw; box.oninput = preview; draw();
+	return { read };
+}
+
+async function loadBackups() {
+	if (!cur) return;
+	const host = cur.name;
+	say('bak-load', 'asking the server…');
+	let info;
+	try { const r = await api('/api/run?' + q('backups-show')); info = jsonFrom(r.output); }
+	catch (e) { if (cur && cur.name === host) say('bak-load', `could not read the backup settings: ${e.message}. If fa on the server is older than this page, update it there.`, true); return; }
+	if (!cur || cur.name !== host) return;
+	bak.loaded = true; bak.info = info; say('bak-load', '');
+	$('bak-setup').hidden = info.configured; $('bak-main').hidden = !info.configured;
+	if (!info.configured) {
+		const cmds = { restic: 'sudo apt install restic', resticprofile: 'curl -sfL https://raw.githubusercontent.com/creativeprojects/resticprofile/master/install.sh | sh -s -- -b ~/.local/bin' };
+		$('bak-missing').innerHTML = (info.missing || []).length ? `<div class="confirmbox danger"><div class="ctitle">Two programs do the work, and ${info.missing.length === 2 ? 'neither is' : 'one is not'} on the server yet</div><p>Run ${info.missing.length === 2 ? 'these' : 'this'} on ${esc(cur.name)}, then press refresh:</p><ul>${info.missing.map(m => `<li>${esc(cmds[m] || m)}</li>`).join('')}</ul><div class="row" style="margin:8px 0 0"><button class="act" id="bak-recheck">refresh</button></div></div>` : '';
+		if ($('bak-recheck')) $('bak-recheck').onclick = loadBackups;
+		$('btnBakSetup').disabled = !!(info.missing || []).length;
+		const same = info.repository ? [{ id: 'same', name: `The same place as ${(info.others || []).join(', ') || 'the other site on this server'}`, note: `${info.repository} · one destination and one password for every site on this server.`, fixed: { repo: '', env: {} } }] : [];
+		if (!newDest || newDest.same !== same.length) { newDest = destForm($('bak-new-dest'), same); newDest.same = same.length; }
+		return;
+	}
+	renderBackups();
+	loadSnapshots();
+}
+function renderBackups() {
+	const i = bak.info, last = i.last;
+	const lastTxt = !last ? 'never' : last.success ? ago(new Date(last.time)) : 'FAILED';
+	$('bak-stats').hidden = false;
+	$('bak-stats').innerHTML = [
+		['last backup', lastTxt, !last ? 'warn' : last.success ? 'ok' : 'bad'],
+		['runs', i.schedule ? `daily ${i.schedule}` : 'only when asked', i.schedule ? '' : 'warn'],
+		['keeps', `${i.keep.daily}d · ${i.keep.weekly}w · ${i.keep.monthly}m`, ''],
+	].map(([k, v, c]) => `<div class="stat ${c}"><b>${esc(v)}</b><span>${esc(k)}</span></div>`).join('');
+	$('bak-when').textContent = last ? new Date(last.time).toLocaleString() + (last.success ? ` · took ${last.duration}s` : '') : '';
+	if (last && !last.success) say('bak-status', `the last backup failed: ${last.error || 'see the output of a run'}`, true);
+	const isTime = /^\d\d:\d\d$/.test(i.schedule);
+	$('bak-time').value = isTime ? i.schedule : '03:30'; $('bak-off').checked = !i.schedule; $('bak-time').disabled = !i.schedule;
+	if (i.schedule && !isTime) say('bak-sched-status', `the schedule was set by hand in the config file (${i.schedule}); saving here replaces it with a daily time`);
+	$('bak-daily').value = i.keep.daily; $('bak-weekly').value = i.keep.weekly; $('bak-monthly').value = i.keep.monthly;
+	$('bak-repo').textContent = i.repository;
+	const others = (i.others || []).length ? ` Also backing up there: ${i.others.join(', ')}.` : '';
+	$('bak-dest-note').textContent = `One destination and one password for every site on this server.${others} The password is in a file beside ${i.config}: keep a copy somewhere else, because without it the backups cannot be read.`;
+	const keys = Object.keys(i.env || {}).sort();
+	$('bak-env').innerHTML = keys.length ? `<table><tbody>${keys.map(k => `<tr><td>${esc(k)}</td><td>${esc(i.env[k])}</td></tr>`).join('')}</tbody></table>` : '';
+}
+$('bak-off').onchange = () => { $('bak-time').disabled = $('bak-off').checked; };
+async function loadSnapshots() {
+	const host = cur.name;
+	// one command at a time can use a site's backups, so the list waits for a running one
+	if (streams.bak?.job) { $('bak-count').textContent = ''; $('bak-snaps').innerHTML = '<p class="muted">A backup or restore is running. The list fills in when it finishes.</p>'; return; }
+	$('bak-count').textContent = 'loading…';
+	let snaps;
+	try { const r = await api('/api/run?' + q('backups-list')); snaps = jsonFrom(r.output); }
+	catch (e) { if (cur && cur.name === host) { $('bak-count').textContent = ''; $('bak-snaps').innerHTML = `<p class="status err">could not list them: ${esc(e.message)}</p>`; } return; }
+	if (!cur || cur.name !== host) return;
+	bak.snaps = snaps;
+	$('bak-count').textContent = snaps.length ? `${snaps.length}, newest first` : '';
+	$('bak-snaps').innerHTML = snaps.length
+		? `<div class="env"><table><tbody>${snaps.map(s => `<tr><td>${esc(new Date(s.time).toLocaleString())}</td><td class="muted">${esc(ago(new Date(s.time)))}</td><td>${esc(bytes(s.summary?.total_bytes_processed))}</td><td><code>${esc(s.short_id)}</code></td><td style="text-align:right"><button class="act mini danger" data-restore="${esc(s.short_id)}">restore…</button></td></tr>`).join('')}</tbody></table></div>`
+		: '<p class="muted">None yet. Press “back up now”: the first one copies everything, later ones only what changed.</p>';
+}
+$('bak-snaps').onclick = async e => {
+	const b = e.target.closest('[data-restore]'); if (!b || streams.bak) return;
+	const s = bak.snaps.find(x => x.short_id === b.dataset.restore); if (!s) return;
+	const when = new Date(s.time).toLocaleString();
+	if (!await askInline(b.closest('table'), { title: `Put ${cur.name} back as it was on ${when}?`, yes: `restore the ${when} snapshot`, danger: true, lines: [
+		'The site goes down while this runs, usually a few minutes; longer with a lot of media.',
+		'Everything posted or changed since that snapshot will no longer be on the site.',
+		'Today\'s database and media are moved aside on the server, not deleted, so this can be undone by hand.' ] })) return;
+	$('bak-out').scrollIntoView({ block: 'nearest' });
+	startJob('bak', 'backups-restore', { args: [s.short_id], confirm: true, then: () => { refresh(); loadBackups(); } });
+};
+$('btnBakRun').onclick = () => startJob('bak', 'backups-run', { then: loadBackups });
+$('btnBakStop').onclick = () => stop('bak');
+$('btnBakRefresh').onclick = loadBackups;
+// one setting at a time; the server's answer (✓ saved, or why not) is shown beside the control
+async function bakSet(statusId, body, after) {
+	say(statusId, 'saving…');
+	try {
+		const r = await post('/api/backups?' + q('backups'), body);
+		const text = r.output.trim().split('\n').filter(Boolean).slice(-2).join(' · ');
+		say(statusId, text || (r.ok ? 'saved' : 'that did not work'), !r.ok);
+		if (r.ok) await (after || loadBackups)();
+		return r;
+	} catch (e) { say(statusId, e.message, true); }
+}
+$('btnBakSched').onclick = () => bakSet('bak-sched-status', { action: 'schedule', time: $('bak-off').checked ? 'off' : $('bak-time').value });
+$('btnBakKeep').onclick = async () => {
+	const [d, w, m] = ['bak-daily', 'bak-weekly', 'bak-monthly'].map(id => parseInt($(id).value, 10) || 0);
+	const i = bak.info.keep, fewer = d < i.daily || w < i.weekly || m < i.monthly;
+	if (fewer && !await askInline($('bak-keep-row'), { title: 'Keep fewer snapshots?', yes: 'keep fewer', danger: true, lines: ['Snapshots beyond the new counts are deleted from the backup at the next run. That cannot be undone.'] })) return;
+	bakSet('bak-sched-status', { action: 'keep', daily: d, weekly: w, monthly: m });
+};
+$('btnBakRepo').onclick = () => {
+	if (!changeDest) changeDest = destForm($('bak-dest-pick'));
+	$('bak-dest-form').hidden = false; $('btnBakRepo').disabled = true;
+};
+$('btnBakDestCancel').onclick = () => { $('bak-dest-form').hidden = true; $('btnBakRepo').disabled = false; say('bak-dest-status', ''); };
+$('btnBakDestSave').onclick = async () => {
+	let d; try { d = changeDest.read(); } catch (e) { say('bak-dest-status', e.message, true); return; }
+	if (!await askInline($('btnBakDestSave').parentElement, { title: 'Send backups somewhere else?', yes: 'change the destination', danger: true, lines: [
+		`From now on every site on this server backs up to ${d.repo}.`, 'Snapshots already made stay where they are and stop being listed here.', 'The new place is reached and checked before this is saved as working.' ] })) return;
+	$('btnBakDestSave').disabled = true; say('bak-dest-status', 'saving, and reaching the new place…');
+	let r; try { r = await post('/api/backups?' + q('backups'), { action: 'setup', repo: d.repo, env: d.env }); } catch (e) { r = { ok: false, output: e.message }; }
+	$('btnBakDestSave').disabled = false;
+	if (!r.ok) { say('bak-dest-status', 'the new place could not be reached, so check the values: what the server said is in the output above', true); rule('bak', 'fa backups setup'); for (const l of r.output.trim().split('\n')) append('bak', l); $('bak-out').scrollIntoView({ block: 'nearest' }); return; }
+	$('btnBakDestCancel').onclick();
+	await loadBackups();
+	say('bak-dest-status', 'saved. Press “back up now”: the first backup to a new place copies everything.');
+};
+$('bak-env-key').oninput = () => say('bak-dest-status', KEY_HINTS[$('bak-env-key').value.trim()] || '');
+$('btnBakEnv').onclick = async () => {
+	const key = $('bak-env-key').value.trim(), value = $('bak-env-val').value;
+	if (!/^[A-Z][A-Z0-9_]*$/.test(key)) { say('bak-dest-status', 'a key is capitals, digits and underscores, like AWS_ACCESS_KEY_ID', true); $('bak-env-key').focus(); return; }
+	const r = await bakSet('bak-dest-status', { action: 'env', key, value });
+	if (r?.ok) { $('bak-env-key').value = ''; $('bak-env-val').value = ''; }
+};
+$('btnBakSetup').onclick = async () => {
+	let d; try { d = newDest.read(); } catch (e) { say('bak-load', e.message, true); return; }
+	$('btnBakSetup').disabled = true;
+	say('bak-load', 'setting up: writing the settings and reaching the storage…');
+	let r;
+	try { r = await post('/api/backups?' + q('backups'), { action: 'setup', repo: d.repo, env: d.env }); }
+	catch (e) { say('bak-load', e.message, true); $('btnBakSetup').disabled = false; return; }
+	$('btnBakSetup').disabled = false;
+	if (!r.ok) { say('bak-load', 'setting up did not finish. What the server said:\n' + r.output.trim(), true); return; }
+	await loadBackups();
+	// what setup printed includes where the password is: keep it on screen
+	rule('bak', 'fa backups setup'); for (const l of r.output.trim().split('\n')) append('bak', l);
+};
+
+// ---- the server's .env --------------------------------------------------------
+// One table: what is set, a field to change it. Secrets come back masked by
+// the server's fa (abc•••••xyz), so the page never holds them. Leave a row
+// blank to keep it; saving writes only the rows you typed in, and ticking
+// remove deletes the line. fa keeps the file as it was as .env.fa-backup.
+const SECRETISH = /PASSWORD|TOKEN|SECRET|_KEY$|DATABASE_URL/;
+const ENV_GROUPS = [
+	['Required', k => k === 'ADMIN_PASSWORD'],
+	['Data', k => /^(DATA_|DATABASE_URL)/.test(k)],
+	['Phone app and uploads', k => /^(CAPTURE_|UPLOAD_)/.test(k)],
+	['Audio', k => /^ELEVENLABS_/.test(k)],
+	['Other', () => true],
+];
+const closeEnv = () => { $('envbox').hidden = true; $('envbox').innerHTML = ''; $('btnEnv').textContent = 'show .env'; };
+function renderEnv(output) {
+	const vars = output.trim().split('\n').map(l => { const i = l.indexOf('='); return i < 1 ? null : { key: l.slice(0, i), value: l.slice(i + 1) }; }).filter(Boolean);
+	const state = (v, required) => v.value === '' ? (required ? '<span class="bad">not set — the site will not start without it</span>' : '<span class="muted">not set</span>')
+		: v.value.includes('•') ? '<span class="muted">set · hidden</span>' : esc(v.value);
+	const row = (v, required) => { const secret = SECRETISH.test(v.key);
+		return `<tr data-k="${esc(v.key)}"><td><code>${esc(v.key)}</code></td><td class="now">${state(v, required)}</td>` +
+			`<td><div class="reveal"><input type="${secret ? 'password' : 'text'}" autocomplete="${secret ? 'new-password' : 'off'}" aria-label="new value for ${esc(v.key)}" placeholder="${v.value === '' ? 'value' : 'new value'}">${secret ? '<button type="button" class="act mini" data-reveal aria-label="show what is typed">show</button>' : ''}</div></td>` +
+			`<td><label class="muted" style="white-space:nowrap"><input type="checkbox" aria-label="remove ${esc(v.key)}"> remove</label></td></tr>`; };
+	let left = vars.slice(), rows = '';
+	for (const [name, test] of ENV_GROUPS) {
+		const mine = left.filter(v => test(v.key)); left = left.filter(v => !test(v.key));
+		if (mine.length) rows += `<tr class="envgroup"><td colspan="4">${esc(name)}</td></tr>` + mine.map(v => row(v, name === 'Required')).join('');
+	}
+	$('envbox').innerHTML = `<table><tr><th>setting</th><th>on the server</th><th>change to</th><th></th></tr>${rows}</table>` +
+		`<div class="row" style="margin-top:12px"><input id="env-key" placeholder="ANOTHER_SETTING" style="width:220px" aria-label="name of a setting to add" autocomplete="off"><input id="env-val" placeholder="value" style="flex:1; min-width:200px" aria-label="its value" autocomplete="off"></div>` +
+		`<div class="row" id="env-row"><button class="act primary" id="btnEnvSaveRestart">save and restart</button><button class="act" id="btnEnvSave">save only</button><button class="act" id="btnEnvClose">close</button></div>` +
+		`<p class="muted">Leave a row blank to keep it. Saving keeps the previous file on the server as .env.fa-backup. A change takes effect when the site restarts.</p>`;
+	$('envbox').hidden = false; $('btnEnv').textContent = 'reload';
+	$('btnEnvClose').onclick = () => { closeEnv(); say('env-status', ''); };
+	$('btnEnvSave').onclick = () => saveEnv(false);
+	$('btnEnvSaveRestart').onclick = () => saveEnv(true);
+	return vars;
+}
+async function loadEnv() {
+	const host = cur.name;
+	say('env-status', 'reading .env over ssh…');
+	try {
+		const r = await api('/api/env?' + q('env'));
+		if (!cur || cur.name !== host) return;
+		if (!r.ok) throw new Error((r.output || '').trim() || 'could not read .env');
+		const vars = renderEnv(r.output);
+		say('env-status', `${vars.filter(v => v.value !== '').length} set on ${host}`);
+	} catch (e) { say('env-status', e.message, true); }
+}
+async function saveEnv(thenRestart) {
+	const set = {}, unset = [];
+	$('envbox').querySelectorAll('tr[data-k]').forEach(tr => {
+		const v = tr.querySelector('input:not([type=checkbox])').value;
+		if (tr.querySelector('input[type=checkbox]').checked) unset.push(tr.dataset.k);
+		else if (v !== '') set[tr.dataset.k] = v;
+	});
+	const nk = $('env-key').value.trim().toUpperCase();
+	if (nk) {
+		if (!/^[A-Z0-9_]{1,64}$/.test(nk)) { say('env-status', 'a setting name is capitals, digits and underscores', true); return; }
+		set[nk] = $('env-val').value;
+	}
+	const keys = Object.keys(set), n = keys.length + unset.length;
+	if (!n) { say('env-status', 'nothing to change', true); return; }
+	if (!await askInline($('env-row'), { title: `Write to .env on ${cur.name}?`, yes: thenRestart ? 'write and restart' : 'write', danger: unset.includes('ADMIN_PASSWORD'),
+		lines: [keys.length ? 'set: ' + keys.join(', ') : '', unset.length ? 'remove: ' + unset.join(', ') : '',
+			unset.includes('ADMIN_PASSWORD') ? 'Without ADMIN_PASSWORD the site will not start.' : '',
+			'The previous file is kept as .env.fa-backup. ' + (thenRestart ? 'The site is then restarted (a few seconds of downtime).' : 'Restart afterwards for it to take effect.')] })) return;
+	say('env-status', 'saving…');
+	let done = 0;
+	try {
+		// one ssh per setting, in order: a failure stops at the setting that failed
+		for (const [k, body] of [...keys.map(k => [k, { Key: k, Value: set[k] }]), ...unset.map(k => [k, { Key: k, Unset: true }])]) {
+			const r = await post('/api/env?' + q('env'), body);
+			if (!r.ok) throw new Error(`${k}: ${(r.output || '').trim().split('\n').pop() || 'not saved'}`);
+			done++;
+		}
+	} catch (e) { say('env-status', `${e.message}${done ? ` — ${done} of ${n} saved before it` : ''}`, true); if (done) loadEnv(); return; }
+	await loadEnv();
+	say('env-status', `saved ${done} change${done === 1 ? '' : 's'}${thenRestart ? ' — restarting' : ' — restart to apply'}`);
+	if (thenRestart) startJob('env', 'restart', { confirm: true });
+}
+$('btnEnv').onclick = loadEnv;
+
+// ---- fa updating itself -------------------------------------------------------
+// `fa self-update <server>` as a job: pull, build, replace fa here, then
+// cross-build and install it on the server. When it ends well the page asks
+// fa ui to restart into the new binary (same address, same key) and reloads.
+$('btnUpd').onclick = async () => {
+	const noPull = $('upd-nopull').checked;
+	if (!await askInline($('upd-row'), { title: `Update fa here and on ${cur.name}?`, yes: 'update fa', lines: [
+		noPull ? 'Builds fa from the checkout on this computer exactly as it is now.' : 'Pulls the latest commits into the checkout on this computer (fast-forward only), then builds fa from it.',
+		`Replaces fa on this computer and on ${cur.name}. The previous one is kept beside each as fa.prev.`,
+		'This page restarts at the end. Nothing on the site itself is touched.' ] })) return;
+	const before = myVersion;
+	startJob('upd', 'selfupdate', { args: noPull ? ['--no-pull'] : [], confirm: true, then: async () => {
+		say('upd-status', 'restarting into the new fa…');
+		try { await post('/api/restart', null); } catch (e) { say('upd-status', `fa is updated, but the dashboard could not restart by itself: ${e.message}. Stop fa ui and start it again.`, true); return; }
+		for (let i = 0; i < 40; i++) { // the old process is gone for a moment; wait for the new one to answer
+			await new Promise(r => setTimeout(r, 500));
+			try { const r = await api('/api/hosts'); if (r.version !== before || i > 6) { location.reload(); return; } } catch {}
+		}
+		say('upd-status', 'fa is updated, but the dashboard did not come back. Run fa ui again.', true);
+	} });
+};
+
+$('btnToken').onclick = async () => {
+	if (await askInline($('token-row'), { title: 'Make a new phone-app token?', yes: 'rotate the token', danger: true,
+		lines: ['The current token stops working at once and the site restarts.', 'The new one is printed below, once: paste it into the app\'s Settings.'] })) stream('token', 'token', { confirm: true, then: () => { if (!$('envbox').hidden) loadEnv(); } });
+};
+
+// ---- boot -------------------------------------------------------------------
+if (!token) { document.body.innerHTML = '<p style="padding:20px">Open the address fa printed in the terminal — it carries the key this page needs.</p>'; return; }
+loadHosts().catch(e => { document.body.innerHTML = `<p style="padding:20px">${esc(e.message)}</p>`; });
+})();
+</script>
+</body>
+</html>

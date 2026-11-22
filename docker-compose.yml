@@ -1,0 +1,56 @@
+# fartingaround — one container.
+#
+#   cp .env.example .env        # at least ADMIN_PASSWORD
+#   docker network create web   # once per host — shared with your reverse proxy
+#   docker compose up -d --build
+#
+# Storage: everything lives in one folder mounted at /data — the SQLite
+# database and all photos/audio/video. It's ./data unless DATA_PATH in .env
+# points elsewhere (a block-storage volume, say). Back the site up by copying
+# that folder. Set DATABASE_URL in .env to use Postgres instead of SQLite.
+#
+# TLS + routing: a reverse proxy on the same external `web` network. Caddy:
+#
+#   example.org, www.example.org {
+#       encode zstd gzip
+#       request_body { max_size 60MB }       # admin photo uploads
+#       reverse_proxy fartingaround-site:3000
+#   }
+#   upload.example.org {                      # only needed with UPLOAD_ORIGIN
+#       request_body { max_size 2GB }        # match BODY_SIZE_LIMIT
+#       reverse_proxy fartingaround-site:3000
+#   }
+#
+# The 127.0.0.1 port below is for on-host debugging only.
+
+services:
+  site:
+    build: .
+    container_name: fartingaround-site
+    restart: unless-stopped
+    logging: # json-file grows without bound otherwise
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+    environment:
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      - CAPTURE_API_TOKEN=${CAPTURE_API_TOKEN:-}
+      - UPLOAD_SECRET=${UPLOAD_SECRET:-}
+      # Behind Cloudflare's proxy? Point big uploads at a DNS-only hostname
+      # (same container) so the proxy's 100 MB body cap doesn't apply.
+      - UPLOAD_ORIGIN=${UPLOAD_ORIGIN:-}
+      - DATABASE_URL=${DATABASE_URL:-}
+      # Optional: enables transcription of audio captions in /admin.
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY:-}
+      - ELEVENLABS_MODEL=${ELEVENLABS_MODEL:-scribe_v1}
+      # Raise if your videos are bigger than this.
+      - BODY_SIZE_LIMIT=${BODY_SIZE_LIMIT:-2G}
+    volumes:
+      # DATA_PATH in .env for a mounted volume (e.g. /mnt/fartingaround-data); default ./data
+      - ${DATA_PATH:-./data}:/data
+    ports:
+      - "127.0.0.1:${DEBUG_PORT:-8406}:3000"
+    networks: [default, web]
+
+networks:
+  web:
+    external: true # docker network create web

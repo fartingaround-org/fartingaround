@@ -1,0 +1,48 @@
+/* Shared by every admin page, so buttons, badges, filters and titles look the
+   same wherever they appear. Page-specific layout stays in each page. */
+
+.admin-shell h1.display { font-size: 2.2rem; margin: 0 0 0.2rem; }
+
+.admin-shell .a-btn {
+	display: inline-flex; align-items: center; justify-content: center;
+	font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+	background: var(--color-paper); color: var(--color-ink);
+	border: 1px solid var(--color-pencil-soft); border-radius: 3px;
+	padding: 0.5rem 0.8rem; cursor: pointer; text-decoration: none;
+}
+.admin-shell .a-btn:hover { border-color: var(--color-ink); }
+.admin-shell .a-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.admin-shell .a-btn.primary { background: var(--color-ink); border-color: var(--color-ink); color: var(--color-paper); }
+.admin-shell .a-btn.primary:hover:not(:disabled) { background: var(--color-wax); border-color: var(--color-wax); }
+.admin-shell .a-btn.danger { color: var(--color-wax); }
+.admin-shell .a-btn.danger:hover { border-color: var(--color-wax); }
+
+.admin-shell .a-badge {
+	font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+	padding: 0.15rem 0.5rem; border-radius: 2px; white-space: nowrap;
+	background: var(--color-paper); color: var(--color-pencil); border: 1px solid var(--color-pencil-soft);
+}
+.admin-shell .a-badge.draft { background: transparent; color: var(--color-wax); border: 1px dashed var(--color-wax); }
+.admin-shell .a-badge.private { background: var(--color-postmark); color: var(--color-paper); border-color: var(--color-postmark); }
+.admin-shell .a-badge.good { background: var(--color-stamp); color: #1b1a16; border-color: var(--color-stamp); }
+.admin-shell .a-badge.bad { background: var(--color-wax); color: var(--color-paper); border-color: var(--color-wax); }
+
+/* Filter chips: links, so the choice lives in the address. */
+.admin-shell .a-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1.2rem; }
+.admin-shell .a-chip {
+	display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.2rem; padding: 0 0.8rem;
+	font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+	color: var(--color-ink); text-decoration: none;
+	border: 1px solid var(--color-pencil-soft); border-radius: 999px;
+}
+.admin-shell .a-chip:hover { border-color: var(--color-ink); }
+.admin-shell .a-chip[aria-current='true'] { background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink); }
+.admin-shell .a-chip .n { opacity: 0.65; }
+
+.admin-shell .a-panel {
+	border: 1px solid var(--color-pencil-soft); background: var(--color-paper-deep);
+	border-radius: 4px; padding: 1rem 1.1rem;
+}
+.admin-shell .a-fine { color: var(--color-pencil); font-size: 0.82rem; margin: 0; }
+.admin-shell .a-error { color: var(--color-wax); margin: 0 0 1rem; }
+.admin-shell .a-notice { color: var(--color-postmark); margin: 0 0 1rem; }

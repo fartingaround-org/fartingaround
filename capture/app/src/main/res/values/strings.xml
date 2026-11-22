@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Fart Around</string>
+    <string name="sync_channel_name">Sync</string>
+    <string name="sync_channel_desc">Progress of uploads to fartingaround.fun</string>
+</resources>

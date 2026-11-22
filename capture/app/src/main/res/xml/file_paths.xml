@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Camera output + our blob store both live under filesDir. -->
+    <files-path name="blobs" path="blobs/" />
+    <files-path name="camera" path="camera/" />
+</paths>

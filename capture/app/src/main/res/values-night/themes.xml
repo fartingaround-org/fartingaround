@@ -1,0 +1,9 @@
+<resources>
+    <!-- Night counterpart of values/themes.xml: only what shows before Compose's
+         first frame. Matches the ink palette's paper colour. -->
+    <style name="Theme.Capture" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#171512</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

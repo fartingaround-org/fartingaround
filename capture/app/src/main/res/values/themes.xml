@@ -1,0 +1,15 @@
+<resources>
+    <!-- Compose draws everything; these only cover the window before the first
+         frame and the transparent share-receiver. -->
+    <style name="Theme.Capture" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#f5efe1</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+    <style name="Theme.Capture.Transparent" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+</resources>

@@ -1,0 +1,25 @@
+# An allowlist: nothing is sent to the build except what is named here.
+#
+# The old version listed what to leave out, so anything new sitting in the
+# checkout (a media folder, a backup, a database dump) rode along into the
+# build: gigabytes of "transferring context" for a site that needs a few MB.
+# If the build one day cannot find a file, add it below.
+*
+
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!vite.config.js
+!tsconfig.json
+!src
+!static
+# Migrations, applied at startup.
+!db
+# One-off tools that run inside the container.
+!scripts
+
+# Inside those, still never:
+**/.DS_Store
+**/*.log
+**/.env
+**/.env.*
