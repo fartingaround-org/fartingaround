@@ -76,6 +76,10 @@ data class Story(
 		class Pull(id: String, val body: String) : Block(id)
 		class Aside(id: String, val body: String, val label: String?) : Block(id)
 		class Divider(id: String, val place: String?, val date: String?) : Block(id)
+		/** A section title. */
+		class Heading(id: String, val body: String) : Block(id)
+		/** Text to show exactly as written: a command, a snippet. */
+		class Code(id: String, val body: String, val caption: String?) : Block(id)
 		class Audio(id: String, val mimeType: String?, val durationMs: Long?, val caption: String?, val transcript: String?, val words: List<Word> = emptyList()) : Block(id)
 		class Video(id: String, val mimeType: String?, val durationMs: Long?, val caption: String?, val posterImageId: String?, val aspect: Float?) : Block(id)
 	}
@@ -133,6 +137,8 @@ data class Story(
 				"pull" -> Block.Pull(id, b.str("body") ?: "")
 				"aside" -> Block.Aside(id, b.str("body") ?: "", b.str("label"))
 				"divider" -> Block.Divider(id, b.str("place"), b.str("date"))
+				"heading" -> Block.Heading(id, b.str("body") ?: "")
+				"code" -> Block.Code(id, b.str("body") ?: "", b.str("caption")?.takeIf { it.isNotBlank() })
 				"audio" -> Block.Audio(
 					id, b.str("mimeType"), b.long("durationMs"), b.str("caption"), b.str("transcript"),
 					b.words()

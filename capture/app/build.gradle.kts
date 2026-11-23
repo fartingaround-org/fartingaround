@@ -21,8 +21,25 @@ android {
 		versionName = "0.1.0"
 	}
 
+	// A release is signed when a keystore is given in the environment: the
+	// GitHub workflow does, and so can your own shell. Without one,
+	// `assembleRelease` still builds, unsigned. The keystore itself is never
+	// in the repository.
+	val keystore: String? = System.getenv("FA_KEYSTORE_FILE")
+	signingConfigs {
+		if (keystore != null) {
+			create("release") {
+				storeFile = file(keystore)
+				storePassword = System.getenv("FA_KEYSTORE_PASSWORD")
+				keyAlias = System.getenv("FA_KEY_ALIAS")
+				keyPassword = System.getenv("FA_KEY_PASSWORD")
+			}
+		}
+	}
+
 	buildTypes {
 		release {
+			signingConfig = signingConfigs.findByName("release")
 			isMinifyEnabled = true
 			isShrinkResources = true
 			proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -39,6 +56,7 @@ android {
 
 	// Kotlin sources live under src/main/kotlin rather than src/main/java.
 	sourceSets["main"].kotlin.srcDir("src/main/kotlin")
+	sourceSets["test"].kotlin.srcDir("src/test/kotlin")
 }
 
 // Room exports its schema here so migrations can be checked in later.
@@ -89,4 +107,7 @@ dependencies {
 	// Scan a QR code to subscribe. Google's own scanner screen does the camera
 	// work, so the app still asks for no camera permission.
 	implementation(libs.play.services.code.scanner)
+
+	// Plain JVM tests of the story document and the feed decoding: no phone needed.
+	testImplementation(libs.junit)
 }

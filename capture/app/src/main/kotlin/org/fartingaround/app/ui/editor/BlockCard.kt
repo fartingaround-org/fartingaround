@@ -81,6 +81,7 @@ fun BlockCard(
 	val label = when (type) {
 		"text" -> "Text"; "photo" -> "Photo"; "dump" -> "Photo dump"; "audio" -> "Audio"; "video" -> "Video"
 		"gallery" -> "Astro gallery (view only)"; "diptych" -> "Diptych"; "pull" -> "Pull quote"; "aside" -> "Aside"; "divider" -> "Divider"
+		"heading" -> "Heading"; "code" -> "Code"
 		else -> type
 	}
 
@@ -108,6 +109,19 @@ fun BlockCard(
 				singleLine = false, minLines = if (type == "text") 4 else 2, modifier = Modifier.fillMaxWidth(),
 				onCommit = { v -> onEdit { it.updateBlock(id) { b -> b.with("body", v) } } }
 			)
+			"heading" -> DebouncedField(
+				key = id, value = block.str("body") ?: "", label = "Section title", modifier = Modifier.fillMaxWidth(),
+				onCommit = { v -> onEdit { it.updateBlock(id) { b -> b.with("body", v) } } }
+			)
+			"code" -> {
+				DebouncedField(
+					key = id, value = block.str("body") ?: "", label = "Shown exactly as typed",
+					singleLine = false, minLines = 3, modifier = Modifier.fillMaxWidth(),
+					onCommit = { v -> onEdit { it.updateBlock(id) { b -> b.with("body", v) } } }
+				)
+				DebouncedField(key = "$id-cap", value = block.str("caption") ?: "", label = "Note under it", modifier = Modifier.fillMaxWidth(),
+					onCommit = { v -> onEdit { it.updateBlock(id) { b -> b.with("caption", v.ifBlank { null }) } } })
+			}
 			"photo" -> {
 				AsyncImage(
 					model = imageModel(story, block.str("imageId"), imgBase, 720, blobs),

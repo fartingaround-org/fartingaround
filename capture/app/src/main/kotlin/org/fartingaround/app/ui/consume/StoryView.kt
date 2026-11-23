@@ -14,6 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.mutableLongStateOf
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -176,6 +180,12 @@ fun StoryView(story: Story, title: String, feedTitle: String, modifier: Modifier
 						val label = listOfNotNull(b.place, b.date).joinToString(" · ")
 						if (label.isNotBlank()) Eyebrow(label, Modifier.padding(top = 8.dp))
 					}
+					is Block.Heading -> {
+						if (b.body.isNotBlank()) Text(b.body, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp))
+					}
+					is Block.Code -> {
+						if (b.body.isNotBlank()) CodeBlock(b)
+					}
 					is Block.Audio -> AudioBlock(story, b)
 					is Block.Video -> VideoBlock(story, b)
 				}
@@ -191,6 +201,28 @@ fun StoryView(story: Story, title: String, feedTitle: String, modifier: Modifier
 
 	lightbox?.let { (dump, start) ->
 		Lightbox(story, dump, start, thread, lightboxComments, post) { lightbox = null; lightboxComments = false }
+	}
+}
+
+/**
+ * A command or snippet, exactly as written: fixed-width, never wrapped (a long
+ * line scrolls sideways), and selectable so it can be copied.
+ */
+@Composable
+private fun CodeBlock(b: Block.Code) {
+	Column(Modifier.padding(horizontal = 16.dp)) {
+		Box(
+			Modifier.fillMaxWidth().clip(RoundedCornerShape(4.dp))
+				.background(MaterialTheme.colorScheme.surfaceVariant)
+				.border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp))
+				.horizontalScroll(rememberScrollState())
+				.padding(12.dp)
+		) {
+			SelectionContainer {
+				Text(b.body, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, softWrap = false)
+			}
+		}
+		b.caption?.let { Muted(it, Modifier.padding(top = 4.dp)) }
 	}
 }
 

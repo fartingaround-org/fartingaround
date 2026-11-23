@@ -92,8 +92,16 @@ If Android Studio flags a dependency version in `gradle/libs.versions.toml`
 as unavailable, bump it to the nearest one it suggests — nothing here depends
 on an exact number.
 
-Release build: `Build → Generate Signed App Bundle / APK` with your own
-keystore. There is no shared signing key or published build yet.
+Tests are plain JVM tests of the story document and the feed decoding:
+`./gradlew testDebugUnitTest`. The GitHub workflow (`.github/workflows/app.yml`)
+runs them and builds a debug APK on every change under `capture/`, so a change
+that does not compile shows up there.
+
+Release build: `./gradlew assembleRelease`, signed when `FA_KEYSTORE_FILE`,
+`FA_KEYSTORE_PASSWORD`, `FA_KEY_ALIAS` and `FA_KEY_PASSWORD` are in the
+environment. The workflow does this for every `v*` tag once the four signing
+secrets are set (see the top of the workflow file) and attaches the APK to the
+GitHub release. The keystore is never in the repository.
 
 ## First run
 
