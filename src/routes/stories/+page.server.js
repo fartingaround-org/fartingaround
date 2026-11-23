@@ -1,14 +1,20 @@
-import { listStoriesFor } from '#lib/server/stories.js';
+import { listStoriesFor, publicStory } from '#lib/server/stories.js';
+import { hasTag, matchesSearch, searchTerms, tagCounts } from '#lib/story-search.js';
 import { isPrivate } from '#lib/story-access.js';
 import { getYear } from '#lib/format.js';
 import { isNote, leadBlock, noteThumbId, storyLabel } from '#lib/story-label.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export const load = async ({ locals, url }) => {
-	// ?tag=… narrows the logbook to stories carrying that tag.
+	// ?tag=… narrows the logbook to stories carrying that tag, ?q=… to stories
+	// containing those words. Both together means both.
 	const tag = url.searchParams.get('tag')?.trim() || null;
+	const q = (url.searchParams.get('q') ?? '').trim().slice(0, 200);
+	const terms = searchTerms(q);
+	// Only what this visitor may read: the tag list and the search never reveal
+	// a private story, a draft, or anything kept out of the reader's copy.
 	const all = await listStoriesFor(locals);
-	const visible = tag ? all.filter((s) => (s.tags || []).some((t) => t.toLowerCase() === tag.toLowerCase())) : all;
+	const visible = all.filter((s) => (!tag || hasTag(s, tag)) && matchesSearch(publicStory(s), terms));
 
 	/** @type {Map<number, any[]>} */
 	const grouped = new Map();
@@ -36,6 +42,9 @@ export const load = async ({ locals, url }) => {
 
 	return {
 		tag,
+		q,
+		found: visible.length,
+		tags: tagCounts(all),
 		years: [...grouped.entries()].map(([year, stories]) => ({ year, stories }))
 	};
 };
