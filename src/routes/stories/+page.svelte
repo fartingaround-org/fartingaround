@@ -32,10 +32,11 @@
 
 	<search class="find">
 		<form method="get" action="/stories" class="find-form">
-			<label class="eyebrow" for="story-search">Search the stories</label>
+			<label class="eyebrow" for="story-search">Search every story</label>
 			<div class="find-row">
 				<input id="story-search" type="search" name="q" value={data.q} placeholder="backups, phone app, a place…" maxlength="200" autocomplete="off" />
-				{#if data.tag}<input type="hidden" name="tag" value={data.tag} />{/if}
+				<!-- A new search always covers every story: it does not carry the chosen
+				     tag along. A tag picked afterwards narrows the results. -->
 				<button type="submit">Search</button>
 			</div>
 		</form>
@@ -63,6 +64,7 @@
 				{#if data.q}with <strong>{data.q}</strong>{/if}
 				{#if data.tag}tagged <strong>{data.tag}</strong>{/if}
 			</span>
+			{#if data.q && data.tag}<a href={`/stories?q=${encodeURIComponent(data.q)}`}>Search every tag</a>{/if}
 			<a href="/stories">Show every story</a>
 		</p>
 	{/if}
