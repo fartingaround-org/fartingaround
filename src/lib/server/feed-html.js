@@ -85,6 +85,12 @@ export function storyToHtml(story, origin) {
 			case 'divider':
 				parts.push(`<hr>${b.place || b.date ? `<p><small>${escapeHtml([b.place, b.date].filter(Boolean).join(' · '))}</small></p>` : ''}`);
 				break;
+			case 'heading':
+				if (b.body) parts.push(`<h2>${escapeHtml(b.body)}</h2>`);
+				break;
+			case 'code':
+				if (b.body) parts.push(`<pre><code>${escapeHtml(b.body)}</code></pre>${b.caption ? `<p><em>${escapeHtml(b.caption)}</em></p>` : ''}`);
+				break;
 			case 'audio':
 				parts.push(
 					`<p><audio controls preload="none" src="${origin}/api/stories/${story.slug}/audio/${b.id}"></audio></p>` +

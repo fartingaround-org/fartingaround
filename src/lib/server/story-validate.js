@@ -9,7 +9,7 @@
 import { randomBytes } from 'node:crypto';
 import { visibilityOf } from '../story-access.js';
 
-const BLOCK_TYPES = new Set(['text', 'photo', 'diptych', 'gallery', 'dump', 'pull', 'aside', 'divider', 'audio', 'video']);
+const BLOCK_TYPES = new Set(['text', 'photo', 'diptych', 'gallery', 'dump', 'pull', 'aside', 'divider', 'heading', 'code', 'audio', 'video']);
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**

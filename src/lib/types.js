@@ -173,7 +173,18 @@
  * @property {string} [place]
  * @property {string} [date]
  *
- * @typedef {TextBlock|PhotoBlock|DiptychBlock|GalleryBlock|DumpBlock|PullBlock|AsideBlock|DividerBlock|AudioBlock|VideoBlock} Block
+ * @typedef {Object} HeadingBlock     A section title inside a story.
+ * @property {'heading'} type
+ * @property {string} id
+ * @property {string} body             One line of plain text
+ *
+ * @typedef {Object} CodeBlock        Something to type or copy exactly: a command, a config snippet.
+ * @property {'code'} type
+ * @property {string} id
+ * @property {string} body             Shown as written, in a fixed-width face; no links, no wrapping
+ * @property {string} [caption]        Short note shown under it
+ *
+ * @typedef {TextBlock|PhotoBlock|DiptychBlock|GalleryBlock|DumpBlock|PullBlock|AsideBlock|DividerBlock|HeadingBlock|CodeBlock|AudioBlock|VideoBlock} Block
  *
  * @typedef {Object} WeatherSnapshot
  * @property {number} tempC

@@ -108,6 +108,8 @@
 				case 'pull': return { type, id, body: '' };
 				case 'aside': return { type, id, body: '', label: '' };
 				case 'divider': return { type, id, place: '', date: '' };
+				case 'heading': return { type, id, body: '' };
+				case 'code': return { type, id, body: '', caption: '' };
 			}
 		})();
 		story.blocks = [...story.blocks, /** @type {any} */ (newBlock)];
@@ -230,6 +232,8 @@
 	<button type="button" onclick={() => addBlock('dump')}>▦▦ Photo dump</button>
 	<button type="button" onclick={() => addBlock('pull')}>" Pull-quote</button>
 	<button type="button" onclick={() => addBlock('aside')}>✎ Aside</button>
+	<button type="button" onclick={() => addBlock('heading')}>H Heading</button>
+	<button type="button" onclick={() => addBlock('code')}>&lt;/&gt; Code</button>
 	<button type="button" onclick={() => addBlock('divider')}>◯ Divider</button>
 {/snippet}
 

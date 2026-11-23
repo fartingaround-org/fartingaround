@@ -566,6 +566,30 @@
 			oninput={(e) => patch({ body: e.currentTarget.value })}
 		></textarea>
 
+	{:else if block.type === 'heading'}
+		<input
+			placeholder="A section title"
+			value={block.body ?? ''}
+			oninput={(e) => patch({ body: e.currentTarget.value })}
+		/>
+
+	{:else if block.type === 'code'}
+		<textarea
+			class="code-input"
+			rows="4"
+			spellcheck="false"
+			autocapitalize="off"
+			autocomplete="off"
+			placeholder="A command or snippet, shown exactly as typed…"
+			value={block.body ?? ''}
+			oninput={(e) => patch({ body: e.currentTarget.value })}
+		></textarea>
+		<input
+			placeholder="Optional note shown under it"
+			value={block.caption ?? ''}
+			oninput={(e) => patch({ caption: e.currentTarget.value })}
+		/>
+
 	{:else if block.type === 'divider'}
 		<div class="fields fields--row">
 			<label>Place<input value={block.place ?? ''} oninput={(e) => patch({ place: e.currentTarget.value })} placeholder="Lisbon, PT" /></label>
@@ -575,6 +599,7 @@
 </div>
 
 <style>
+	.code-input { font-family: var(--font-mono); font-size: 0.85rem; white-space: pre; overflow-x: auto; }
 	.block {
 		background: var(--color-paper-deep);
 		border-radius: 4px;

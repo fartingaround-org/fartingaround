@@ -7,6 +7,8 @@
 	import BlockPull from './blocks/BlockPull.svelte';
 	import BlockAside from './blocks/BlockAside.svelte';
 	import BlockDivider from './blocks/BlockDivider.svelte';
+	import BlockHeading from './blocks/BlockHeading.svelte';
+	import BlockCode from './blocks/BlockCode.svelte';
 	import BlockAudio from './blocks/BlockAudio.svelte';
 	import BlockVideo from './blocks/BlockVideo.svelte';
 
@@ -43,6 +45,10 @@
 			<BlockAside {block} />
 		{:else if block.type === 'divider'}
 			<BlockDivider {block} />
+		{:else if block.type === 'heading'}
+			<BlockHeading {block} />
+		{:else if block.type === 'code'}
+			<BlockCode {block} />
 		{:else if block.type === 'audio'}
 			<BlockAudio {block} />
 		{:else if block.type === 'video'}

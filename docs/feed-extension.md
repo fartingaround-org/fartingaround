@@ -88,7 +88,9 @@ their fields match `src/lib/types.js` in the reference implementation:
 | `dump` | `photos[]` of `{ imageId, w?, h?, caption?, alt?, takenAt?, coords?, audio?, section? }`, `caption?`, `size?`, `rowSize?`, `slideshowSeconds?`, `map?` (`none`/`pins`/`path`) — a photo dump |
 | `pull` | `body` |
 | `aside` | `body`, `label?` |
-| `divider` | `place?`, `date?` |
+| `divider` | `place?`, `date?` — a postmark between parts of a trip; both are a few words at most |
+| `heading` | `body` — a section title, one line of plain text (added 2026-11) |
+| `code` | `body`, `caption?` — text to show exactly as written, in a fixed-width face: a command, a snippet. No links, no reflowing (added 2026-11) |
 | `audio` | `mimeType`, `durationMs?`, `caption?`, `transcript?` |
 | `video` | `mimeType`, `durationMs?`, `caption?`, `posterImageId?`, `aspect?` |
 
