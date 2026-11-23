@@ -184,16 +184,27 @@ func (s *Server) hosts(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 	case http.MethodPost:
-		var h Host
-		if err := json.NewDecoder(io.LimitReader(r.Body, 1<<16)).Decode(&h); err != nil || strings.TrimSpace(h.SSH) == "" {
+		// "was" is the name the server is listed under now, when the save is
+		// also renaming it.
+		var in struct {
+			Host
+			Was string `json:"was"`
+		}
+		if err := json.NewDecoder(io.LimitReader(r.Body, 1<<16)).Decode(&in); err != nil || strings.TrimSpace(in.SSH) == "" {
 			http.Error(w, "bad host", 400)
 			return
 		}
-		h.SSH = strings.TrimSpace(h.SSH)
+		h := in.Host
+		h.SSH, h.Name = strings.TrimSpace(h.SSH), strings.TrimSpace(h.Name)
 		if h.Name == "" {
 			h.Name = h.SSH
 		}
-		if ex := s.findHost(h.Name); ex != nil {
+		if in.Was != "" && in.Was != h.Name {
+			if msg := s.renameHost(in.Was, h); msg != "" {
+				http.Error(w, msg, 409)
+				return
+			}
+		} else if ex := s.findHost(h.Name); ex != nil {
 			*ex = h
 		} else {
 			s.cfg.Hosts = append(s.cfg.Hosts, h)
@@ -215,6 +226,36 @@ func (s *Server) hosts(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(s.cfg.Hosts, func(i, j int) bool { return s.cfg.Hosts[i].Name < s.cfg.Hosts[j].Name })
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"hosts": s.cfg.Hosts, "version": s.version})
+}
+
+// renameHost replaces the entry called was with h, which carries the new
+// name. It returns why not, when it can't. Call with s.mu held.
+func (s *Server) renameHost(was string, h Host) string {
+	at := -1
+	for i, ex := range s.cfg.Hosts {
+		switch ex.Name {
+		case h.Name:
+			return fmt.Sprintf("there is already a server called %s — give this one another name", h.Name)
+		case was:
+			at = i
+		}
+	}
+	if at < 0 {
+		return fmt.Sprintf("no server called %s in the list any more", was)
+	}
+	// Jobs are filed under the server's name. A finished one is only a log to
+	// look back at and can go; a running one must not lose its name.
+	for k, j := range s.jobs {
+		if j.Host != was {
+			continue
+		}
+		if j.running() {
+			return fmt.Sprintf("%s is still running on %s — rename it when that has finished", j.Label, was)
+		}
+		delete(s.jobs, k)
+	}
+	s.cfg.Hosts[at] = h
+	return ""
 }
 
 // ── commands ────────────────────────────────────────────────────────────────

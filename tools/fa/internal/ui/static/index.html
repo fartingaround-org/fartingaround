@@ -516,7 +516,6 @@ function showAdd(edit) {
 	$('addhost-title').textContent = editing ? `Connection to ${editing.name}` : hosts.length ? 'Add a server' : 'Add your first server';
 	$('addhost-note').textContent = editing ? 'Where this page finds the server. Nothing on the server changes.' : 'A machine with fa installed that you can already ssh to — the same thing you would give ssh. Nothing is changed on it by adding it here.';
 	$('add-ssh').value = editing?.ssh || ''; $('add-name').value = editing?.name || ''; $('add-dir').value = editing?.dir || '';
-	$('add-name').disabled = !!editing; // the name is how the list knows it; remove and add to rename
 	$('add-save').textContent = editing ? 'save' : 'add server';
 	$('add-cancel').hidden = !hosts.length;
 	say('add-status', ''); $('add-ssh').focus();
@@ -527,10 +526,13 @@ $('add-cancel').onclick = () => { hideAdd(); if (cur) showTab(store.get('tab') |
 const saveHost = async () => {
 	const ssh = $('add-ssh').value.trim();
 	if (!ssh) { say('add-status', 'type the ssh target first: user@host, or an alias from ~/.ssh/config', true); $('add-ssh').focus(); return; }
-	const name = editing ? editing.name : ($('add-name').value.trim() || ssh.split('@').pop());
-	if (!editing && hosts.some(h => h.name === name)) { say('add-status', `there is already a server called ${name} — give this one another name`, true); $('add-name').focus(); return; }
-	try { await post('/api/hosts', { name, ssh, dir: $('add-dir').value.trim() }); }
+	const was = editing ? editing.name : '';
+	const name = $('add-name').value.trim() || ssh.split('@').pop();
+	if (name !== was && hosts.some(h => h.name === name)) { say('add-status', `there is already a server called ${name} — give this one another name`, true); $('add-name').focus(); return; }
+	try { await post('/api/hosts', { name, ssh, dir: $('add-dir').value.trim(), was }); }
 	catch (e) { say('add-status', e.message, true); return; }
+	// a renamed server keeps what this page knew about it
+	if (was && was !== name) { if (was in health) { health[name] = health[was]; delete health[was]; } if (store.get('host') === was) store.set('host', name); }
 	cur = null; await loadHosts(name);
 };
 $('add-save').onclick = saveHost;
