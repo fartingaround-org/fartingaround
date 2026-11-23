@@ -21,7 +21,7 @@ func runStatus(c *Ctx, _ []string) error {
 	say("install   %s", in.Describe())
 	say("commit    %s", gitHead(in))
 
-	ci, err := inspectContainer(siteContainer)
+	ci, err := inspectContainer(in.Container())
 	switch {
 	case err != nil:
 		bad("site container: not created (run `fa up` or `fa deploy`)")

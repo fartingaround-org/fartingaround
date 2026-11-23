@@ -91,6 +91,18 @@ func TestPrompterAuto(t *testing.T) {
 	}
 }
 
+func TestPrompterAsking(t *testing.T) {
+	if (&prompter{auto: true}).asking("repo") {
+		t.Error("with --yes nothing is asked")
+	}
+	if (&prompter{ans: map[string]string{"repo": "x"}}).asking("repo") {
+		t.Error("a given answer is not asked for")
+	}
+	if !(&prompter{ans: map[string]string{}}).asking("repo") {
+		t.Error("with no answer and no --yes, the question is asked")
+	}
+}
+
 func TestPrompterRejectsABadChoice(t *testing.T) {
 	proxies := [][2]string{{"existing", ""}, {"caddy", ""}, {"tunnel", ""}}
 

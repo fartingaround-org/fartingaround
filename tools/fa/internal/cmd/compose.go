@@ -20,9 +20,6 @@ func composePass(in *install.Install, args ...string) error {
 	return sh.Pass(in.Dir, "docker", append(append([]string{"compose"}, in.ComposeFiles()...), args...)...)
 }
 
-// siteContainer is the fixed container_name in docker-compose.yml.
-const siteContainer = "fartingaround-site"
-
 type containerInfo struct {
 	Running   bool
 	Status    string

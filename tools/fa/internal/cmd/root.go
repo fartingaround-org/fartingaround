@@ -25,6 +25,7 @@ type Ctx struct {
 	In      *install.Install
 	Version string
 	Dir     string // --dir, if given
+	Site    string // -s, if given
 }
 
 var commands = map[string]*command{}
@@ -37,6 +38,7 @@ func Run(args []string, version string) error {
 	fs.SetOutput(os.Stderr)
 	host := fs.String("host", os.Getenv("FA_HOST"), "run on this ssh host (user@box) instead of locally")
 	dir := fs.String("dir", "", "install directory (default: FA_DIR, cwd, /opt/fartingaround, ~/fartingaround.fun)")
+	site := fs.String("s", os.Getenv("FA_SITE"), "which site on this server, by its name in `fa sites` (default: the first one)")
 	verbose := fs.Bool("v", false, "echo the commands fa runs")
 	fs.Usage = func() { usage(fs) }
 	if err := fs.Parse(args); err != nil {
@@ -52,7 +54,7 @@ func Run(args []string, version string) error {
 	// doesn't move the command there.
 	localOnly := len(rest) > 0 && (rest[0] == "ui" || rest[0] == "pull" || rest[0] == "self-update")
 	if *host != "" && !localOnly {
-		return runRemote(*host, *dir, *verbose, rest)
+		return runRemote(*host, *dir, *site, *verbose, rest)
 	}
 	if *host != "" && rest[0] == "ui" {
 		os.Setenv("FA_HOST", *host)
@@ -67,9 +69,13 @@ func Run(args []string, version string) error {
 	if !ok {
 		return fmt.Errorf("unknown command %q — try `fa help`", name)
 	}
-	ctx := &Ctx{Version: version, Dir: *dir}
+	ctx := &Ctx{Version: version, Dir: *dir, Site: *site}
 	if !c.noInstall {
-		in, err := install.Find(*dir)
+		where, err := siteDir(*dir, *site)
+		if err != nil {
+			return err
+		}
+		in, err := install.Find(where)
 		if err != nil {
 			return err
 		}
@@ -80,8 +86,11 @@ func Run(args []string, version string) error {
 
 // runRemote re-invokes fa over ssh with the same arguments. -t keeps logs -f
 // and the setup prompts interactive.
-func runRemote(host, dir string, verbose bool, rest []string) error {
+func runRemote(host, dir, site string, verbose bool, rest []string) error {
 	remote := []string{"fa"}
+	if site != "" {
+		remote = append(remote, "-s", shellQuote(site))
+	}
 	if dir != "" {
 		remote = append(remote, "--dir", shellQuote(dir))
 	}
@@ -98,6 +107,36 @@ func runRemote(host, dir string, verbose bool, rest []string) error {
 	return err
 }
 
+// siteDir turns --dir / -s into the folder to look in ("" = the usual places).
+// With neither, a server that has a list of sites uses its main one, unless
+// fa is being run from inside a site's own folder.
+func siteDir(dir, site string) (string, error) {
+	if dir != "" && site != "" {
+		return "", fmt.Errorf("give --dir or -s, not both")
+	}
+	if dir != "" {
+		return dir, nil
+	}
+	name := site
+	if name == "" {
+		if wd, err := os.Getwd(); err == nil && install.IsInstall(wd) {
+			return "", nil
+		}
+		name = install.MainSite
+	}
+	s, found, err := install.FindSite(name)
+	if err != nil {
+		return "", err
+	}
+	if found {
+		return s.Dir, nil
+	}
+	if site == "" || site == install.MainSite {
+		return "", nil // no list yet: one site, found the usual way
+	}
+	return "", fmt.Errorf("no site called %q on this server — `fa sites` lists them", site)
+}
+
 func shellQuote(s string) string {
 	if s == "" {
 		return "''"
@@ -110,7 +149,7 @@ func shellQuote(s string) string {
 
 func usage(fs *flag.FlagSet) {
 	fmt.Fprintln(os.Stderr, "fa — control center for a fartingaround install")
-	fmt.Fprintln(os.Stderr, "\nusage: fa [--host user@box] [--dir path] [-v] <command> [args]\n\ncommands:")
+	fmt.Fprintln(os.Stderr, "\nusage: fa [--host user@box] [-s site] [--dir path] [-v] <command> [args]\n\ncommands:")
 	names := make([]string, 0, len(commands))
 	for n := range commands {
 		names = append(names, n)

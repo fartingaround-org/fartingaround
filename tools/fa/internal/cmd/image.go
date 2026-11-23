@@ -254,8 +254,8 @@ func shortDigest(d string) string {
 
 // runningImageID is the image the site's container was started from, as an
 // id that still names that exact image after its tag has moved on.
-func runningImageID() string {
-	out, err := sh.Out("", "docker", "inspect", "--format", "{{.Image}}", siteContainer)
+func runningImageID(in *install.Install) string {
+	out, err := sh.Out("", "docker", "inspect", "--format", "{{.Image}}", in.Container())
 	if err != nil {
 		return ""
 	}
@@ -267,7 +267,7 @@ func runningImageID() string {
 // running before is put back under the same name and started again.
 func deployImage(c *Ctx, ref, commitBefore string) error {
 	in := c.In
-	previous := runningImageID()
+	previous := runningImageID(in)
 
 	say("downloading %s…", ref)
 	if err := composePass(in, "pull", "site"); err != nil {

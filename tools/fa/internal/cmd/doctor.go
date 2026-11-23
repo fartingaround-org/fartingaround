@@ -92,14 +92,14 @@ func runDoctor(c *Ctx, _ []string) error {
 	} else {
 		ok("docker network `web` exists")
 	}
-	ci, err := inspectContainer(siteContainer)
+	ci, err := inspectContainer(in.Container())
 	switch {
 	case err != nil:
 		fail("site container not created — fa up")
 	case !ci.Running:
 		fail("site container is %s — fa logs site", ci.Status)
 		if ci.Status == "restarting" {
-			out, _ := sh.Out(in.Dir, "docker", "logs", "--tail", "8", siteContainer)
+			out, _ := sh.Out(in.Dir, "docker", "logs", "--tail", "8", in.Container())
 			for _, l := range strings.Split(out, "\n") {
 				say("      %s", l)
 			}
@@ -151,9 +151,9 @@ func runDoctor(c *Ctx, _ []string) error {
 			fail("proxy %s is not on the `web` network, so it can't reach any site — docker network connect web %s && docker restart %s (and list `web` under the proxy's networks in its compose file, so a recreate keeps it)", cn, cn, cn)
 		} else {
 			ok("proxy %s running", cn)
-			if _, err := sh.OutTimeout(8*time.Second, "", "docker", "exec", cn, "wget", "-q", "-O", "/dev/null", "http://"+siteContainer+":3000/rss.xml"); err != nil {
-				if _, err2 := sh.OutTimeout(8*time.Second, "", "docker", "exec", cn, "curl", "-fs", "-o", "/dev/null", "http://"+siteContainer+":3000/rss.xml"); err2 != nil {
-					fail("proxy can't reach %s:3000 — are both on the `web` network? Is there a site block in the Caddyfile?", siteContainer)
+			if _, err := sh.OutTimeout(8*time.Second, "", "docker", "exec", cn, "wget", "-q", "-O", "/dev/null", "http://"+in.Container()+":3000/rss.xml"); err != nil {
+				if _, err2 := sh.OutTimeout(8*time.Second, "", "docker", "exec", cn, "curl", "-fs", "-o", "/dev/null", "http://"+in.Container()+":3000/rss.xml"); err2 != nil {
+					fail("proxy can't reach %s:3000 — are both on the `web` network? Is there a site block in the Caddyfile?", in.Container())
 				} else {
 					ok("proxy reaches the site")
 				}

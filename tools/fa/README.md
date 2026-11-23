@@ -82,6 +82,33 @@ Three ways to expose a site:
 
 Then point DNS, and `fa doctor` tells you what's left.
 
+## More than one site on a server
+
+```
+fa add notes --domain notes.example.org    another site, beside the first
+fa sites                                   every site here, with its state
+fa -s notes status                         any command, for one site
+fa -s notes backup
+```
+
+`fa add` asks for the name and the address when they aren't given. The new
+site is a complete install of its own: its own folder (`fa-notes`, next to the
+first site's), its own data and SQLite database, its own container
+(`fa-notes`) and its own admin password. It starts empty and runs the same
+version as the first site. Nothing is shared between sites except the
+downloaded image and the reverse proxy.
+
+Without `-s`, fa means the site the server started with (`main`), or the one
+whose folder you are in. Each site is updated by its own `fa -s NAME deploy`.
+
+The proxy: where fa runs Caddy itself, `fa add` adds the new address and
+reloads it. Where the proxy is your own, fa prints the few lines to add to its
+Caddyfile and leaves it alone. A server behind a Cloudflare Tunnel can't take
+a second site yet.
+
+The list of sites is `~/.config/fa/sites.json` on the server. A server with
+one site has no such file and needs none.
+
 ## The dashboard
 
 ```sh

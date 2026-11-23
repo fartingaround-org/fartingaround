@@ -22,7 +22,7 @@ func init() {
 // answers file (domain=example.org).
 var setupKeys = []struct{ key, help string }{
 	{"dir", "install directory"},
-	{"repo", "site repository to clone"},
+	{"repo", "where to get the site from (leave alone unless you run your own fork)"},
 	{"domain", "public domain, e.g. example.org"},
 	{"data-path", "folder for the database and all media"},
 	{"db", "sqlite or postgres"},
@@ -166,6 +166,23 @@ func (p *prompter) fail(format string, a ...any) {
 	}
 }
 
+// asking reports whether the question for key will really be put to a person:
+// not when the answer was given, and not with --yes.
+func (p *prompter) asking(key string) bool {
+	_, ok := p.given(key)
+	return !ok && !p.auto
+}
+
+// note explains the question that follows, when it is going to be asked.
+func (p *prompter) note(key string, lines ...string) {
+	if !p.asking(key) {
+		return
+	}
+	for _, l := range lines {
+		say("%s", l)
+	}
+}
+
 func (p *prompter) ask(key, q, def string) string {
 	if v, ok := p.given(key); ok {
 		if secretAnswers[key] {
@@ -288,7 +305,12 @@ func runSetup(c *Ctx, args []string) error {
 	}
 	dir := p.ask("dir", "Install directory", defDir)
 
-	repo := p.ask("repo", "Site repository", install.DefaultRepo)
+	p.note("repo",
+		"",
+		"The site's files come from the official fartingaround project.",
+		"Unless you really know what you're doing (you run your own fork), press Enter to keep it as is.",
+		"Your settings and your content never go there. They stay on this server.")
+	repo := p.ask("repo", "Get the site from", install.DefaultRepo)
 	if !install.IsInstall(dir) {
 		say("cloning %s → %s", repo, dir)
 		if err := os.MkdirAll(filepath.Dir(dir), 0o755); err != nil {
@@ -403,7 +425,7 @@ func runSetup(c *Ctx, args []string) error {
 	switch in.Settings.Proxy {
 	case "existing":
 		in.Settings.CaddyContainer = p.ask("proxy-container", "Your reverse proxy's container name (for `fa logs caddy`; blank to skip)", orGuess(in.Settings.CaddyContainer))
-		say("  add a site block to your proxy pointing at fartingaround-site:3000 — see docker-compose.yml for a Caddy example")
+		say("  add a site block to your proxy pointing at %s:3000 — see docker-compose.yml for a Caddy example", in.Container())
 	case "caddy":
 		in.Settings.CaddyContainer = "fartingaround-caddy"
 		email := p.ask("acme-email", "Email for Let's Encrypt expiry notices", in.Env.Get("ACME_EMAIL"))
@@ -414,7 +436,7 @@ func runSetup(c *Ctx, args []string) error {
 	case "tunnel":
 		if !p.auto {
 			say("  In the Cloudflare dashboard: Zero Trust → Networks → Tunnels → Create → Docker. Copy the token")
-			say("  after `--token`. Add a public hostname %s → http://fartingaround-site:3000.", in.Settings.Domain)
+			say("  after `--token`. Add a public hostname %s → http://%s:3000.", in.Settings.Domain, in.Container())
 		}
 		token := p.ask("tunnel-token", "Tunnel token", in.Env.Get("TUNNEL_TOKEN"))
 		if token == "" && p.auto {
@@ -477,6 +499,8 @@ func randomPassword() string {
 }
 
 // writeCaddyOverlay adds a Caddy service and a Caddyfile for the `caddy` mode.
+// The Caddyfile is rewritten in place (same file, new contents), which is what
+// lets the running proxy see the change and reload it.
 func writeCaddyOverlay(in *install.Install) error {
 	fa := filepath.Join(in.Dir, "fa")
 	if err := os.MkdirAll(fa, 0o755); err != nil {
@@ -492,7 +516,7 @@ func writeCaddyOverlay(in *install.Install) error {
 	request_body {
 		max_size 60MB
 	}
-	reverse_proxy fartingaround-site:3000
+	reverse_proxy %s:3000
 }
 
 # Big phone uploads bypass Cloudflare's 100 MB cap when UPLOAD_ORIGIN points here (DNS-only record).
@@ -500,9 +524,12 @@ upload.%s {
 	request_body {
 		max_size 2GB
 	}
-	reverse_proxy fartingaround-site:3000
+	reverse_proxy %s:3000
 }
-`, d, d, d)
+`, d, d, in.Container(), d, in.Container())
+	// Sites added beside this one share its proxy. They are written out again
+	// every time, so re-running setup here never drops them.
+	caddyfile += addedSiteBlocks()
 	if err := os.WriteFile(filepath.Join(fa, "Caddyfile"), []byte(caddyfile), 0o644); err != nil {
 		return err
 	}

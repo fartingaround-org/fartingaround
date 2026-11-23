@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fartingaround-org/fartingaround/tools/fa/internal/install"
 	"github.com/fartingaround-org/fartingaround/tools/fa/internal/sh"
 )
 
@@ -19,8 +20,8 @@ func init() {
 // builtImage is the name compose gave the image it built on this server:
 // <project folder>-site. Read off the running container, because the folder
 // is not always called the same thing.
-func builtImage() string {
-	if ci, err := inspectContainer(siteContainer); err == nil && ci.Image != "" {
+func builtImage(in *install.Install) string {
+	if ci, err := inspectContainer(in.Container()); err == nil && ci.Image != "" {
 		name := ci.Image
 		if colon := strings.LastIndex(name, ":"); colon > strings.LastIndex(name, "/") {
 			name = name[:colon]
@@ -129,7 +130,7 @@ func runDeploy(c *Ctx, args []string) error {
 	}
 
 	// Built on this server. Keep the last good image around so a bad build can be undone.
-	siteImage := builtImage()
+	siteImage := builtImage(in)
 	if _, err := sh.Out("", "docker", "image", "inspect", siteImage+":latest"); err == nil {
 		_, _ = sh.Out("", "docker", "tag", siteImage+":latest", siteImage+":previous")
 	}

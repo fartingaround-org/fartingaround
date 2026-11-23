@@ -35,7 +35,8 @@ services:
   site:
     image: ${FA_IMAGE:-ghcr.io/fartingaround-org/fartingaround}:${FA_VERSION:-latest}
     build: .
-    container_name: fartingaround-site
+    # FA_CONTAINER is set for a site added beside another with `fa add`.
+    container_name: ${FA_CONTAINER:-fartingaround-site}
     restart: unless-stopped
     logging: # json-file grows without bound otherwise
       driver: json-file
