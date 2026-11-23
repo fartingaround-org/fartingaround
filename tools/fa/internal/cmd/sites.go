@@ -388,10 +388,10 @@ func addedSiteBlocks() string {
 }
 
 // connectProxy makes the new site reachable. Where fa runs the proxy itself
-// it adds the entry and reloads; where the proxy is the owner's own, fa
-// leaves it alone and says exactly what to add.
+// it adds the entry and reloads. Where the proxy is the owner's own, the site
+// gets a file of its own beside the others (see proxy.go); if the server isn't
+// arranged for that yet, fa says what to add and changes nothing.
 func connectProxy(main, added *install.Install) {
-	block := siteCaddyBlock(added.Settings.Domain, added.Container())
 	if main.Settings.Proxy == "caddy" {
 		if err := writeCaddyOverlay(main); err != nil {
 			warn("couldn't add %s to %s/fa/Caddyfile: %v", added.Settings.Domain, main.Dir, err)
@@ -399,16 +399,18 @@ func connectProxy(main, added *install.Install) {
 			warn("added %s to the proxy's settings but couldn't reload it (%v) — docker restart %s", added.Settings.Domain, err, main.Settings.CaddyContainer)
 		} else {
 			ok("proxy: %s now goes to %s", added.Settings.Domain, added.Container())
-			return
 		}
+		return
 	}
-	say("Your reverse proxy needs to know about it. fa doesn't edit a proxy it didn't set up.")
-	say("Add this to its Caddyfile, then reload it:")
+	err := writeProxyFile(added)
+	if err == nil {
+		return
+	}
+	say("The reverse proxy doesn't know about %s yet:", added.Settings.Domain)
+	say("%s", indent(err.Error()))
+	say("Or add this to its Caddyfile by hand, then reload it:")
 	say("")
-	say("%s", indent(block))
-	if cn := proxyContainer(main); cn != "" {
-		say("  docker exec %s caddy reload --config /etc/caddy/Caddyfile", cn)
-	}
+	say("%s", indent(siteCaddyBlock(added.Settings.Domain, added.Container())))
 }
 
 type siteRow struct {

@@ -425,7 +425,7 @@ func runSetup(c *Ctx, args []string) error {
 	switch in.Settings.Proxy {
 	case "existing":
 		in.Settings.CaddyContainer = p.ask("proxy-container", "Your reverse proxy's container name (for `fa logs caddy`; blank to skip)", orGuess(in.Settings.CaddyContainer))
-		say("  add a site block to your proxy pointing at %s:3000 — see docker-compose.yml for a Caddy example", in.Container())
+		say("  the proxy needs an entry sending %s to %s:3000 — after this, `fa proxy write` adds it as a file of the site's own (`fa proxy show` prints it)", in.Settings.Domain, in.Container())
 	case "caddy":
 		in.Settings.CaddyContainer = "fartingaround-caddy"
 		email := p.ask("acme-email", "Email for Let's Encrypt expiry notices", in.Env.Get("ACME_EMAIL"))

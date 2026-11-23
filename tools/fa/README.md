@@ -102,9 +102,41 @@ Without `-s`, fa means the site the server started with (`main`), or the one
 whose folder you are in. Each site is updated by its own `fa -s NAME deploy`.
 
 The proxy: where fa runs Caddy itself, `fa add` adds the new address and
-reloads it. Where the proxy is your own, fa prints the few lines to add to its
-Caddyfile and leaves it alone. A server behind a Cloudflare Tunnel can't take
-a second site yet.
+reloads it. A server behind a Cloudflare Tunnel can't take a second site yet.
+
+### Your own Caddy: a file per site
+
+Where the proxy is your own Caddy, fa never edits its Caddyfile. Each site
+gets a small file of its own in a folder the proxy reads:
+
+```
+fa proxy show     print this site's entry
+fa proxy write    save it as the site's own file, check the proxy accepts it, reload
+```
+
+Once per server, give the proxy that folder and tell it to read it. In the
+proxy's compose file, under the caddy service's volumes:
+
+```
+      - ./sites.d:/etc/caddy/sites:ro
+```
+
+and in its Caddyfile, on a line of its own outside any block:
+
+```
+import sites/*.caddy
+```
+
+(If the whole of `/etc/caddy` is already a folder on the server, only the
+`import` line is needed.) `fa proxy write` tells you which of these is missing.
+It finds the folder by asking Docker, so there is nothing to configure in fa.
+
+The file holds the site's address (and `www.` for a bare domain), and its
+upload address when `UPLOAD_ORIGIN` is set; run `fa proxy write` again after
+changing either. A block for the same address left in the main Caddyfile has
+to be removed first, and fa says so instead of writing a duplicate. If the
+proxy won't accept the result, the file is taken back out and nothing changes
+for the other sites. `fa add` does all this for a new site by itself.
 
 The list of sites is `~/.config/fa/sites.json` on the server. A server with
 one site has no such file and needs none.

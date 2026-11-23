@@ -276,5 +276,10 @@ func updateRemote(host, src, version string) error {
 		return errorf("%s: installed, but `fa version` there says %q, not %s — is another fa earlier on its PATH?", host, strings.TrimSpace(out), version)
 	}
 	ok("%s: %s is now fa %s (was %s)", host, remotePath, version, had)
+	// A first install lands in the user's own folder, which commands sent over
+	// ssh don't look in: `fa --host` and the dashboard would say "not found".
+	if out, _ := ssh(`command -v fa >/dev/null 2>&1 || echo NOT_ON_PATH`); strings.Contains(out, "NOT_ON_PATH") {
+		warn("%s: fa is installed, but commands sent over ssh won't find it there. Once, to put it where they look (asks for your password on the server):\n      ssh -t %s 'sudo ln -sf %s /usr/local/bin/fa'", host, host, remotePath)
+	}
 	return nil
 }
