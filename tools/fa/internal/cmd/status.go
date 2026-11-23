@@ -16,6 +16,16 @@ func init() {
 	register(&command{name: "logs", summary: "tail logs: fa logs [site|caddy|tunnel|db] [-f] [-n N] [--since 15m]", run: runLogs})
 }
 
+// overdueAfter is how old the newest off-site backup may be before status
+// says so. With a daily schedule, a day and a few hours' grace: one missed
+// night shows up the next morning. Without one, two days.
+func overdueAfter(scheduled bool) time.Duration {
+	if scheduled {
+		return 30 * time.Hour
+	}
+	return 48 * time.Hour
+}
+
 func runStatus(c *Ctx, _ []string) error {
 	in := c.In
 	say("install   %s", in.Describe())
@@ -88,12 +98,15 @@ func runStatus(c *Ctx, _ []string) error {
 		default:
 			if t, err := time.Parse(time.RFC3339, last.Time); err != nil {
 				ok("off-site backup made: %s", last.Time)
-			} else if age := time.Since(t); age > 48*time.Hour {
+			} else if age := time.Since(t); age > overdueAfter(info.Schedule != "") {
 				warn("off-site backup %s ago: older than it should be (fa backups show)", shortAge(age))
 			} else {
 				ok("off-site backup %s ago", shortAge(age))
 			}
 		}
+	}
+	if info, err := gatherBackups(in); err == nil && info.ScheduleMissing {
+		bad("automatic backups are set for %s but are not in the crontab, so none will run: fa backups set schedule %s", info.Schedule, info.Schedule)
 	}
 	if bd := backupDir(in); bd != "" {
 		if latest := latestBackup(bd); latest != "" {

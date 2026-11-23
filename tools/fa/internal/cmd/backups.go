@@ -457,18 +457,87 @@ func lastLines(s string, n int) string {
 	return strings.Join(keep, "\n")
 }
 
-// applySchedule makes the crontab match the profile: remove what is there,
-// then install again if a schedule is set.
+// applySchedule makes the crontab match the profile.
+//
+// It never runs `resticprofile unschedule`. Since resticprofile 0.30 that
+// command, given one profile, also removes the scheduled jobs of every other
+// profile in the same file, and the file is shared by every site on the
+// server: setting one site's schedule silently switched the others' backups
+// off. `schedule` on its own replaces this profile's line and leaves the
+// rest, on old versions and new. Switching a schedule off takes this
+// profile's line out of the crontab directly.
 func applySchedule(in *install.Install, c rpConfig) error {
-	_, _ = sh.Out("", "resticprofile", rpArgs(in, "unschedule")...)
-	if str(sect(sect(c, profileName(in)), "backup")["schedule"]) == "" {
+	name := profileName(in)
+	if str(sect(sect(c, name), "backup")["schedule"]) == "" {
+		if err := removeScheduleLine(name); err != nil {
+			return err
+		}
 		ok("no schedule: backups run only when asked")
 		return nil
 	}
 	if _, err := sh.Out("", "resticprofile", rpArgs(in, "schedule")...); err != nil {
 		return err
 	}
-	ok("scheduled: every day at %s (server time)", timeFromSchedule(str(sect(sect(c, profileName(in)), "backup")["schedule"])))
+	if !scheduleInstalled(name) {
+		return errorf("resticprofile reported the schedule as set, but the crontab has no line for %s (crontab -l)", name)
+	}
+	ok("scheduled: every day at %s (server time)", timeFromSchedule(str(sect(sect(c, name), "backup")["schedule"])))
+	return nil
+}
+
+// scheduleMark is what identifies a profile's line in the crontab.
+func scheduleMark(profile string) string { return "run-schedule backup@" + profile }
+
+// isScheduleLine: a live (not commented-out) crontab line for this profile.
+func isScheduleLine(line, profile string) bool {
+	t := strings.TrimSpace(line)
+	return t != "" && !strings.HasPrefix(t, "#") && strings.HasSuffix(t, scheduleMark(profile))
+}
+
+// crontab returns the user's crontab; none at all is an empty one.
+func crontab() []string {
+	out, err := exec.Command("crontab", "-l").Output()
+	if err != nil {
+		return nil
+	}
+	return strings.Split(strings.TrimRight(string(out), "\n"), "\n")
+}
+
+// scheduleInstalled says whether cron really has this profile's backup: the
+// setting in the profile is only what was asked for.
+func scheduleInstalled(profile string) bool {
+	for _, l := range crontab() {
+		if isScheduleLine(l, profile) {
+			return true
+		}
+	}
+	return false
+}
+
+// withoutSchedule drops one profile's line and keeps every other line as it is.
+func withoutSchedule(lines []string, profile string) ([]string, bool) {
+	var kept []string
+	found := false
+	for _, l := range lines {
+		if isScheduleLine(l, profile) {
+			found = true
+			continue
+		}
+		kept = append(kept, l)
+	}
+	return kept, found
+}
+
+func removeScheduleLine(profile string) error {
+	kept, found := withoutSchedule(crontab(), profile)
+	if !found {
+		return nil
+	}
+	c := exec.Command("crontab", "-")
+	c.Stdin = strings.NewReader(strings.Join(kept, "\n") + "\n")
+	if out, err := c.CombinedOutput(); err != nil {
+		return errorf("could not take the backup line out of the crontab: %v %s", err, strings.TrimSpace(string(out)))
+	}
 	return nil
 }
 
@@ -551,10 +620,13 @@ type backupsInfo struct {
 	Repository string            `json:"repository"`
 	Env        map[string]string `json:"env"` // values masked
 	Schedule   string            `json:"schedule"`
-	Keep       map[string]int    `json:"keep"`
-	Sources    []string          `json:"sources"`
-	Last       *backupsLast      `json:"last,omitempty"`
-	Others     []string          `json:"others,omitempty"` // other sites' profiles in the same file
+	// ScheduleMissing: a schedule is set, but cron has no line for it, so
+	// nothing will run. Seen when another site's setup removed it.
+	ScheduleMissing bool           `json:"scheduleMissing,omitempty"`
+	Keep            map[string]int `json:"keep"`
+	Sources         []string       `json:"sources"`
+	Last            *backupsLast   `json:"last,omitempty"`
+	Others          []string       `json:"others,omitempty"` // other sites' profiles in the same file
 }
 
 type backupsLast struct {
@@ -595,6 +667,7 @@ func gatherBackups(in *install.Install) (*backupsInfo, error) {
 	}
 	b, r := sect(p, "backup"), sect(p, "retention")
 	info.Schedule = timeFromSchedule(str(b["schedule"]))
+	info.ScheduleMissing = info.Schedule != "" && !scheduleInstalled(name)
 	for _, k := range []string{"daily", "weekly", "monthly"} {
 		info.Keep[k] = num(r["keep-"+k], 0)
 	}
@@ -648,6 +721,9 @@ func backupsShow(in *install.Install, asJSON bool) error {
 		say("  schedule  off (only when asked)")
 	} else {
 		say("  schedule  every day at %s, server time", info.Schedule)
+	}
+	if info.ScheduleMissing {
+		bad("the schedule is set but is not in the crontab, so no backup will run by itself. Put it back with: fa backups set schedule %s", info.Schedule)
 	}
 	say("  keep      %d daily, %d weekly, %d monthly", info.Keep["daily"], info.Keep["weekly"], info.Keep["monthly"])
 	switch {
