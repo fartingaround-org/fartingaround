@@ -124,6 +124,20 @@ func sourceVersion(src string) string {
 	return v
 }
 
+// ownVersion asks the fa at path what it is. FA_HOST and FA_SITE are taken
+// out of its environment first: with FA_HOST set, `fa version` is answered by
+// the server it names, and the check would be reading the wrong fa.
+func ownVersion(path string) (string, error) {
+	c := exec.Command(path, "version")
+	for _, kv := range os.Environ() {
+		if !strings.HasPrefix(kv, "FA_HOST=") && !strings.HasPrefix(kv, "FA_SITE=") {
+			c.Env = append(c.Env, kv)
+		}
+	}
+	b, err := c.CombinedOutput()
+	return strings.TrimSpace(string(b)), err
+}
+
 // swapIn puts the new binary where the running one is. The old one is kept
 // beside it as <name>.prev (one generation), and the replacement is a rename,
 // so there is never a moment with no fa at that path.
@@ -189,7 +203,7 @@ func runSelfUpdate(c *Ctx, args []string) error {
 	if err := goBuild(src, fresh, version, "", ""); err != nil {
 		return err
 	}
-	if out, err := sh.Out("", fresh, "version"); err != nil || !strings.Contains(out, version) {
+	if out, err := ownVersion(fresh); err != nil || !strings.Contains(out, version) {
 		os.Remove(fresh)
 		return errorf("the new fa does not run (%v %s), so nothing was replaced", err, out)
 	}
