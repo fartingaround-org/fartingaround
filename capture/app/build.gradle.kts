@@ -7,19 +7,18 @@ plugins {
 }
 
 android {
-	// Kotlin can't have a package segment named `fun` (it's a keyword), so the
-	// code namespace differs from the applicationId. The applicationId is what
-	// Android/Play treat as the app's identity, and it matches the Capacitor
-	// app so this can ship as an upgrade of the same install.
-	namespace = "fartingaround.capture"
+	// The applicationId is what Android and the Play Store treat as the app's
+	// identity, and it can't change once published. It belongs to the project
+	// (fartingaround.org), not to any one site.
+	namespace = "org.fartingaround.app"
 	compileSdk = 36
 
 	defaultConfig {
-		applicationId = "fun.fartingaround.capture"
+		applicationId = "org.fartingaround.app"
 		minSdk = 31
 		targetSdk = 36
-		versionCode = 2
-		versionName = "2.0"
+		versionCode = 1
+		versionName = "0.1.0"
 	}
 
 	buildTypes {

@@ -1,8 +1,8 @@
 # kotlinx.serialization: keep the generated serializers for our models.
--keepclassmembers class fartingaround.capture.model.** {
+-keepclassmembers class org.fartingaround.app.model.** {
     *** Companion;
 }
--keepclasseswithmembers class fartingaround.capture.model.** {
+-keepclasseswithmembers class org.fartingaround.app.model.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
--keep,includedescriptorclasses class fartingaround.capture.model.**$$serializer { *; }
+-keep,includedescriptorclasses class org.fartingaround.app.model.**$$serializer { *; }

@@ -1,8 +1,9 @@
 # fartingaround — native Android (Create / Consume)
 
-The Android companion for [fartingaround.fun](https://fartingaround.fun),
-Kotlin + Jetpack Compose. It replaces the Capacitor app that used to live in
-`../app` (now deleted).
+The Android companion for a fartingaround site, Kotlin + Jetpack Compose.
+It has no site built in: on first run, Create asks for your site's address and
+capture token (`fa env get CAPTURE_API_TOKEN` on the server). Consume, the
+reader, works without one.
 
 **Create** goes from rough notes to a published story without a laptop: share
 photos in from any app (three or more become a photo dump), take photos and
@@ -37,7 +38,7 @@ capture/
   build.gradle.kts, settings.gradle.kts, gradle/libs.versions.toml
   app/src/main/
     AndroidManifest.xml
-    kotlin/fartingaround/capture/
+    kotlin/org/fartingaround/app/
       CaptureApp.kt          Application: hand-wired singletons, Coil loader
       MainActivity.kt        Compose host
       ShareActivity.kt       ACTION_SEND(_MULTIPLE) → new draft story (dump block)
@@ -70,9 +71,9 @@ capture/
         settings/, live/
 ```
 
-Kotlin package is `fartingaround.capture` (not `fun.fartingaround.capture`)
-because `fun` is a Kotlin keyword. The `applicationId` is still
-`fun.fartingaround.capture`, so this installs over the Capacitor app.
+The Kotlin package and the `applicationId` are both `org.fartingaround.app`.
+Earlier builds used `fun.fartingaround.capture`; Android treats the new id as
+a different app, so sync any drafts from an old install before removing it.
 
 ## Storage model
 
@@ -91,12 +92,12 @@ If Android Studio flags a dependency version in `gradle/libs.versions.toml`
 as unavailable, bump it to the nearest one it suggests — nothing here depends
 on an exact number.
 
-Release build: `Build → Generate Signed App Bundle / APK`, reusing the
-`release.keystore` from the Capacitor setup (see `../app/SETUP.md` §9).
+Release build: `Build → Generate Signed App Bundle / APK` with your own
+keystore. There is no shared signing key or published build yet.
 
 ## First run
 
-Settings tab → API base (`https://fartingaround.fun`) and the capture token
+First run (or Settings) → your site's address and the capture token
 (`CAPTURE_API_TOKEN` on the site) → **Test connection**. Optionally an
 ElevenLabs key for transcription.
 

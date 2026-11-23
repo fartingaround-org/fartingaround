@@ -15,5 +15,5 @@ dependencyResolutionManagement {
 	}
 }
 
-rootProject.name = "fartingaround-capture"
+rootProject.name = "fartingaround-app"
 include(":app")
