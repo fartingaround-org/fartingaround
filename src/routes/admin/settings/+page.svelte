@@ -131,7 +131,26 @@
 	<button type="submit" class="a-btn primary">Save settings</button>
 </form>
 
+<section class="a-panel group phone" id="phone">
+	<h2>Phone app</h2>
+	{#if !data.phone.available}
+		<p class="hint">The phone app needs a token, and this site has none. On the server: <code>fa token rotate</code>, then <code>fa restart</code>.</p>
+	{:else if data.phone.qr}
+		<p class="hint">In the app, choose <strong>Scan the code</strong> on the "Connect your site" screen and point the phone at this.</p>
+		<div class="qr" role="img" aria-label="QR code that connects the phone app to this site">{@html data.phone.qr}</div>
+		<p class="hint">Treat it like a password: anyone who scans it can post to this site. If it is ever seen by someone it shouldn't be, run <code>fa token rotate</code> on the server and connect the app again.</p>
+		<a class="a-btn" href="/admin/settings#phone">Hide the code</a>
+	{:else}
+		<p class="hint">Connect the phone app without typing anything: show a code here and scan it from the app.</p>
+		<a class="a-btn" href="/admin/settings?phone=1#phone">Show the code</a>
+	{/if}
+</section>
+
 <style>
+	.phone { max-width: 44rem; margin-top: 1.4rem; justify-items: start; }
+	.phone .hint { margin: 0; max-width: 34rem; color: var(--color-ink-soft); font-size: 0.92rem; }
+	.qr { width: 15rem; max-width: 100%; background: #fff; border: 1px solid var(--color-pencil-soft); border-radius: 4px; overflow: hidden; }
+	.qr :global(svg) { display: block; width: 100%; height: auto; }
 	.header { margin-bottom: 1.4rem; }
 	.form { display: grid; gap: 1rem; max-width: 44rem; justify-items: start; }
 	.group { display: grid; gap: 0.7rem; width: 100%; }

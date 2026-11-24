@@ -1,11 +1,11 @@
-# fartingaround — native Android (Create / Consume)
+# FartingAround — native Android (Write / Read)
 
 The Android companion for a fartingaround site, Kotlin + Jetpack Compose.
 It has no site built in: on first run, Create asks for your site's address and
 capture token (`fa env get CAPTURE_API_TOKEN` on the server). Consume, the
 reader, works without one.
 
-**Create** goes from rough notes to a published story without a laptop: share
+**Write** goes from rough notes to a published story without a laptop: share
 photos in from any app (three or more become a photo dump), take photos and
 video with the phone's own camera app, record audio — a standalone clip or a
 *spoken caption* on a dump photo — jot notes, tags and a GPS drop with
@@ -15,7 +15,7 @@ a draft is just a story with `draft: true`, and publishing is a switch.
 Edits made on the site and on the phone are reconciled with a simple
 "changed on the site — keep mine / take theirs" prompt.
 
-**Consume** is an RSS/JSON Feed reader that renders `_fartingaround` stories
+**Read** is an RSS/JSON Feed reader that renders `_fartingaround` stories
 natively (photo dumps, galleries, maps, audio) and shows everything else as
 an article. Subscriptions are OPML, backed up to the site when one is set.
 

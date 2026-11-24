@@ -109,6 +109,14 @@ fun BlockCard(
 				singleLine = false, minLines = if (type == "text") 4 else 2, modifier = Modifier.fillMaxWidth(),
 				onCommit = { v -> onEdit { it.updateBlock(id) { b -> b.with("body", v) } } }
 			)
+		}
+		// An aside may carry a short label above it ("Note", "Good to know").
+		if (type == "aside") {
+			DebouncedField(key = "$id-label", value = block.str("label") ?: "", label = "Label above it (optional)", modifier = Modifier.fillMaxWidth(),
+				onCommit = { v -> onEdit { it.updateBlock(id) { b -> b.with("label", v.ifBlank { null }) } } })
+		}
+		when (type) {
+			"text", "pull", "aside" -> {}
 			"heading" -> DebouncedField(
 				key = id, value = block.str("body") ?: "", label = "Section title", modifier = Modifier.fillMaxWidth(),
 				onCommit = { v -> onEdit { it.updateBlock(id) { b -> b.with("body", v) } } }

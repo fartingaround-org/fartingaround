@@ -14,6 +14,9 @@ import {
 	SITE_DEFAULTS
 } from '#lib/server/settings.js';
 import { commentsModeOf } from '#lib/story-access.js';
+import { config } from '#lib/server/config.js';
+import { qrSvg } from '#lib/server/qr.js';
+import { appConnectLink } from '#lib/app-link.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export const load = async ({ url }) => ({
@@ -24,7 +27,14 @@ export const load = async ({ url }) => ({
 	authorName: await authorName(),
 	defaultVisibility: await defaultVisibility(),
 	followingPublic: await followingPublic(),
-	commentsMode: await commentsMode()
+	commentsMode: await commentsMode(),
+	// The code that connects the phone app. It carries the site's token, so it
+	// is only made when asked for (?phone=1), never on an ordinary visit to
+	// this page, and it is drawn here on the server.
+	phone: {
+		available: Boolean(config.captureApiToken),
+		qr: url.searchParams.get('phone') === '1' && config.captureApiToken ? await qrSvg(appConnectLink(url.origin, config.captureApiToken)) : null
+	}
 });
 
 /** @type {import('./$types').Actions} */

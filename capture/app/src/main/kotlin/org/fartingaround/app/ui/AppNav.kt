@@ -140,7 +140,7 @@ fun AppNav(openDraftId: String?, onOpenedDraft: () -> Unit) {
 								Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
 									// On a narrow phone the switch matters more than the name.
 									if (showTitle) {
-										Text("fart around", style = MaterialTheme.typography.headlineSmall, maxLines = 1, softWrap = false)
+										Text("FartingAround", style = MaterialTheme.typography.headlineSmall, maxLines = 1, softWrap = false)
 									}
 									ModeSwitch(consume = consume, onSelect = { mode -> scope.launch { context.captureApp.settings.setMode(mode) } })
 								}
@@ -222,7 +222,7 @@ private fun NeedsSite(content: @Composable () -> Unit) {
 	if (settings.apiBase.isBlank()) ConnectScreen() else content()
 }
 
-/** Create | Consume, always visible: the two halves of the app. */
+/** Write | Read, always visible: the two halves of the app. (In the code they are still capture and consume.) */
 @Composable
 private fun ModeSwitch(consume: Boolean, onSelect: (AppMode) -> Unit) {
 	Row(
@@ -230,8 +230,8 @@ private fun ModeSwitch(consume: Boolean, onSelect: (AppMode) -> Unit) {
 			.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(50))
 			.padding(2.dp)
 	) {
-		ModeSegment("Create", selected = !consume) { onSelect(AppMode.CAPTURE) }
-		ModeSegment("Consume", selected = consume) { onSelect(AppMode.CONSUME) }
+		ModeSegment("Write", selected = !consume) { onSelect(AppMode.CAPTURE) }
+		ModeSegment("Read", selected = consume) { onSelect(AppMode.CONSUME) }
 	}
 }
 

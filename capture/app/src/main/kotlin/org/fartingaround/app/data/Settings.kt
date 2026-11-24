@@ -1,6 +1,8 @@
 package org.fartingaround.app.data
 
 import android.content.Context
+import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -54,8 +56,13 @@ private val Context.store by preferencesDataStore(name = "capture-settings")
 class Settings(private val context: Context) {
 	private object Keys {
 		val apiBase = stringPreferencesKey("captureApiBase")
+		// The two secrets are stored encrypted (Secrets.kt) under the "Sealed"
+		// names. The plain names are what older builds wrote; they are read once
+		// more, then replaced.
 		val apiToken = stringPreferencesKey("captureApiToken")
 		val elevenKey = stringPreferencesKey("elevenLabsApiKey")
+		val apiTokenSealed = stringPreferencesKey("captureApiTokenSealed")
+		val elevenKeySealed = stringPreferencesKey("elevenLabsApiKeySealed")
 		val elevenModel = stringPreferencesKey("elevenLabsModel")
 		val theme = stringPreferencesKey("uiTheme")
 		val dayTheme = stringPreferencesKey("uiThemeDay")
@@ -67,8 +74,8 @@ class Settings(private val context: Context) {
 		val theme = parseTheme(p[Keys.theme])
 		CaptureSettings(
 			apiBase = p[Keys.apiBase]?.takeIf { it.isNotBlank() } ?: defaults.apiBase,
-			apiToken = p[Keys.apiToken] ?: "",
-			elevenLabsApiKey = p[Keys.elevenKey] ?: "",
+			apiToken = secret(p[Keys.apiTokenSealed], p[Keys.apiToken]),
+			elevenLabsApiKey = secret(p[Keys.elevenKeySealed], p[Keys.elevenKey]),
 			elevenLabsModel = p[Keys.elevenModel]?.takeIf { it.isNotBlank() } ?: defaults.elevenLabsModel,
 			theme = theme,
 			dayTheme = p[Keys.dayTheme]?.let(::parseTheme)?.takeIf { it != ThemeName.ASTRO }
@@ -84,9 +91,39 @@ class Settings(private val context: Context) {
 	suspend fun save(s: CaptureSettings) {
 		context.store.edit { p ->
 			p[Keys.apiBase] = s.apiBase.trim()
-			p[Keys.apiToken] = s.apiToken.trim()
-			p[Keys.elevenKey] = s.elevenLabsApiKey.trim()
+			putSecret(p, Keys.apiTokenSealed, Keys.apiToken, s.apiToken.trim())
+			putSecret(p, Keys.elevenKeySealed, Keys.elevenKey, s.elevenLabsApiKey.trim())
 			p[Keys.elevenModel] = s.elevenLabsModel.trim()
+		}
+	}
+
+	/** The last values decrypted, so the many readers of [flow] don't each ask the keystore again. */
+	private val opened = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+	/** A secret as it should be used: the encrypted copy when there is one, else what an older build left. */
+	private fun secret(sealed: String?, plain: String?): String {
+		if (!sealed.isNullOrEmpty()) {
+			opened[sealed]?.let { return it }
+			Secrets.open(sealed)?.let { opened[sealed] = it; return it }
+		}
+		return plain ?: ""
+	}
+
+	/** Stores [value] encrypted and drops any plain copy. If the keystore can't be used, it is kept as before. */
+	private fun putSecret(p: MutablePreferences, sealedKey: Preferences.Key<String>, plainKey: Preferences.Key<String>, value: String) {
+		val sealed = if (value.isEmpty()) null else Secrets.seal(value)
+		when {
+			value.isEmpty() -> { p.remove(sealedKey); p.remove(plainKey) }
+			sealed != null -> { p[sealedKey] = sealed; p.remove(plainKey) }
+			else -> { p.remove(sealedKey); p[plainKey] = value }
+		}
+	}
+
+	/** Encrypts secrets an older build stored as plain text. Run once at start; does nothing afterwards. */
+	suspend fun sealSecrets() {
+		context.store.edit { p ->
+			p[Keys.apiToken]?.takeIf { it.isNotEmpty() }?.let { putSecret(p, Keys.apiTokenSealed, Keys.apiToken, it) }
+			p[Keys.elevenKey]?.takeIf { it.isNotEmpty() }?.let { putSecret(p, Keys.elevenKeySealed, Keys.elevenKey, it) }
 		}
 	}
 

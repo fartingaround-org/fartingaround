@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import org.fartingaround.app.consume.Story
 import org.fartingaround.app.data.normalizeSiteAddress
+import org.fartingaround.app.data.parseConnectLink
 import org.fartingaround.app.model.StoryDoc
 import org.fartingaround.app.model.appendBlock
 import org.fartingaround.app.model.blocks
@@ -135,5 +136,28 @@ class StoryDocTest {
 		assertEquals("https://example.org:8443", normalizeSiteAddress("example.org:8443"))
 		assertNull(normalizeSiteAddress(""))
 		assertNull(normalizeSiteAddress("not a site"))
+	}
+
+	@Test fun aScannedConnectCodeGivesTheSiteAndItsToken() {
+		val link = parseConnectLink(" fartingaround://connect?site=https%3A%2F%2Fexample.org&token=abc123 ")
+		assertEquals("https://example.org", link!!.site)
+		assertEquals("abc123", link.token)
+		// Whatever the token holds comes back as it was.
+		assertEquals("a b&c=d+e", parseConnectLink("fartingaround://connect?site=https%3A%2F%2Fexample.org%3A8443&token=a%20b%26c%3Dd%2Be")!!.token)
+		assertEquals("https://example.org:8443", parseConnectLink("fartingaround://connect?token=t&site=https%3A%2F%2Fexample.org%3A8443")!!.site)
+		// Anything else is not a connect code: a feed address, a missing part, another app's link.
+		assertNull(parseConnectLink("https://example.org/rss.xml"))
+		assertNull(parseConnectLink("fartingaround://connect?site=https%3A%2F%2Fexample.org"))
+		assertNull(parseConnectLink("fartingaround://connect?token=abc"))
+		assertNull(parseConnectLink("fartingaround://connect?site=&token=abc"))
+		assertNull(parseConnectLink("otherapp://connect?site=https%3A%2F%2Fexample.org&token=abc"))
+	}
+
+	@Test fun newBlocksForWordsHaveATypeAndAnId() {
+		for ((block, type) in listOf(StoryDoc.headingBlock() to "heading", StoryDoc.codeBlock() to "code", StoryDoc.asideBlock() to "aside")) {
+			assertEquals(type, block.str("type"))
+			assertFalse(block.str("id").isNullOrBlank())
+			assertEquals("", block.str("body"))
+		}
 	}
 }

@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -414,6 +415,19 @@ fun StoryEditorScreen(localId: String, onClose: () -> Unit, onPreview: () -> Uni
 						onRemove = { pendingRemove = id },
 						onMove = { delta -> edit { it.moveBlock(id, delta) } }
 					)
+				}
+			}
+
+			// Words between the pictures: the same kinds of block the web editor
+			// offers. Each is added at the end and moved with its arrows.
+			Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+				Eyebrow("Add")
+				Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+					OutlinedButton(onClick = { edit { it.appendBlock(StoryDoc.textBlock("")) } }) { Text("Text") }
+					OutlinedButton(onClick = { edit { it.appendBlock(StoryDoc.headingBlock()) } }) { Text("Heading") }
+					OutlinedButton(onClick = { edit { it.appendBlock(StoryDoc.codeBlock()) } }) { Text("Code") }
+					OutlinedButton(onClick = { edit { it.appendBlock(StoryDoc.asideBlock()) } }) { Text("Aside") }
+					OutlinedButton(onClick = { edit { it.appendBlock(StoryDoc.pullBlock("")) } }) { Text("Quote") }
 				}
 			}
 

@@ -68,6 +68,9 @@ object StoryDoc {
 	// Block builders. Shapes per types.js; ids per the server's convention.
 	fun textBlock(body: String) = JsonObject(mapOf("type" to JsonPrimitive("text"), "id" to JsonPrimitive(newBlockId("text")), "body" to JsonPrimitive(body)))
 	fun pullBlock(body: String) = JsonObject(mapOf("type" to JsonPrimitive("pull"), "id" to JsonPrimitive(newBlockId("pull")), "body" to JsonPrimitive(body)))
+	fun headingBlock(body: String = "") = JsonObject(mapOf("type" to JsonPrimitive("heading"), "id" to JsonPrimitive(newBlockId("heading")), "body" to JsonPrimitive(body)))
+	fun codeBlock(body: String = "") = JsonObject(mapOf("type" to JsonPrimitive("code"), "id" to JsonPrimitive(newBlockId("code")), "body" to JsonPrimitive(body)))
+	fun asideBlock(body: String = "") = JsonObject(mapOf("type" to JsonPrimitive("aside"), "id" to JsonPrimitive(newBlockId("aside")), "body" to JsonPrimitive(body)))
 	fun dividerBlock() = JsonObject(mapOf("type" to JsonPrimitive("divider"), "id" to JsonPrimitive(newBlockId("divider"))))
 
 	fun photoBlock(imageIdOrPlaceholder: String, caption: String? = null) =

@@ -1,7 +1,10 @@
 package org.fartingaround.app
 
 import android.app.Application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import android.content.Context
@@ -42,6 +45,8 @@ class CaptureApp : Application(), SingletonImageLoader.Factory {
 	override fun onCreate() {
 		super.onCreate()
 		SyncWorker.ensureChannel(this)
+		// Secrets a build before encryption left as plain text are encrypted now.
+		CoroutineScope(Dispatchers.IO).launch { runCatching { settings.sealSecrets() } }
 		RefreshWorker.schedule(this)
 	}
 

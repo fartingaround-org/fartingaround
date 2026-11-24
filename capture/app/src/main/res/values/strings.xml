@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Fart Around</string>
+    <string name="app_name">FartingAround</string>
     <string name="sync_channel_name">Sync</string>
     <string name="sync_channel_desc">Progress of uploads to your site</string>
 </resources>
