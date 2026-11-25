@@ -1,6 +1,8 @@
 import { listStoriesFor, publicStory } from '#lib/server/stories.js';
 import { isNote, leadBlock, noteThumbId } from '#lib/story-label.js';
 import { isPrivate } from '#lib/story-access.js';
+import { locationPrecision } from '#lib/server/settings.js';
+import { publicLocation } from '#lib/location-privacy.js';
 
 /**
  * A story with no title is shown as its content, not as a card: send its
@@ -13,17 +15,20 @@ function noteFields(s) {
 	return { note: true, lead: leadBlock(pub), more: (pub.blocks || []).length > 1, thumbId: noteThumbId(pub) };
 }
 
-/** @param {import('#lib/types.js').Story} s */
-function card(s) {
+/** @param {import('#lib/types.js').Story} s @param {unknown} precision  the site's locationPrecision() */
+function card(s, precision) {
 	return {
 		slug: s.slug,
 		title: s.title,
 		...noteFields(s),
 		date: s.date,
-		location: s.location,
+		location: publicLocation(s.location, precision),
 		summary: s.summary,
-		coverImageId: s.coverImageId,
-		coverFocus: s.coverFocus,
+		// No cover chosen: the story's first picture (or its video's poster) stands
+		// in, as it does in the logbook. Only a story with no picture at all is set
+		// as words. The focal point belongs to the chosen cover, not the stand-in.
+		coverImageId: noteThumbId(s),
+		coverFocus: s.coverImageId ? s.coverFocus : undefined,
 		draft: s.draft,
 		private: isPrivate(s)
 	};
@@ -49,8 +54,9 @@ export const load = async ({ locals }) => {
 	}
 	// The wide slot at the top goes to the newest titled story, never to a note.
 	const lead = picked.find((s) => !isNote(s)) ?? null;
+	const precision = await locationPrecision();
 	return {
-		featured: lead ? card(lead) : null,
-		stories: picked.filter((s) => s !== lead).map(card)
+		featured: lead ? card(lead, precision) : null,
+		stories: picked.filter((s) => s !== lead).map((s) => card(s, precision))
 	};
 };

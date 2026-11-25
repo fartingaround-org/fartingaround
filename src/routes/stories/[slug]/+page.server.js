@@ -1,7 +1,7 @@
 import { error, fail } from '@sveltejs/kit';
 import { getDb } from '#lib/server/db.js';
 import { CommentError, addComment, deleteOwnComment, editComment, listComments } from '#lib/server/comments.js';
-import { authorName, commentsMode } from '#lib/server/settings.js';
+import { authorName, commentsMode, locationPrecision } from '#lib/server/settings.js';
 import { getStoryFor, listStoriesFor, publicStory } from '#lib/server/stories.js';
 import { canSeeComments, isPrivate } from '#lib/story-access.js';
 import { dumpPhotoIds } from '#lib/blocks.js';
@@ -38,9 +38,10 @@ export const load = async ({ params, locals, setHeaders }) => {
 		? await listComments(await getDb(), story.slug, { isAdmin: locals.isAdmin, readerId: locals.reader?.id, ownerName: owner, photoIds: dumpPhotoIds(story) })
 		: [];
 	// Visitors (admin included — the editor has its own load) get the
-	// sanitized version, so unapplied photo EXIF never leaves the server.
+	// sanitized version, so unapplied photo EXIF never leaves the server and
+	// the story's location is only as precise as the site's setting allows.
 	return {
-		story: publicStory(story),
+		story: publicStory(story, await locationPrecision()),
 		private: priv,
 		newer: link(newer),
 		older: link(older),

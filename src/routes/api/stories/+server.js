@@ -14,6 +14,8 @@
 import { json } from '@sveltejs/kit';
 import { listStoriesFor } from '#lib/server/stories.js';
 import { imageUrl } from '#lib/image.js';
+import { locationPrecision } from '#lib/server/settings.js';
+import { publicLocation } from '#lib/location-privacy.js';
 
 const ALLOWED_ORIGINS = [
 	'https://localhost',
@@ -57,12 +59,13 @@ export async function GET({ request, url }) {
 	const headers = cors(request);
 
 	// No auth here, so: published, public stories only.
+	const precision = await locationPrecision();
 	const live = (await listStoriesFor({}))
 		.map((s) => ({
 			slug: s.slug,
 			title: s.title,
 			date: s.date,
-			location: s.location || null,
+			location: publicLocation(s.location, precision) || null,
 			summary: s.summary || null,
 			tags: s.tags || [],
 			coverUrl: coverUrl(url.origin, s.coverImageId, 800),

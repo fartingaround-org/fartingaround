@@ -1,6 +1,8 @@
 import { listStoriesFor, publicStory } from '#lib/server/stories.js';
 import { hasTag, matchesSearch, searchTerms, tagCounts } from '#lib/story-search.js';
 import { isPrivate } from '#lib/story-access.js';
+import { locationPrecision } from '#lib/server/settings.js';
+import { publicLocation } from '#lib/location-privacy.js';
 import { getYear } from '#lib/format.js';
 import { isNote, leadBlock, noteThumbId, storyLabel } from '#lib/story-label.js';
 
@@ -14,7 +16,8 @@ export const load = async ({ locals, url }) => {
 	// Only what this visitor may read: the tag list and the search never reveal
 	// a private story, a draft, or anything kept out of the reader's copy.
 	const all = await listStoriesFor(locals);
-	const visible = all.filter((s) => (!tag || hasTag(s, tag)) && matchesSearch(publicStory(s), terms));
+	const precision = await locationPrecision();
+	const visible = all.filter((s) => (!tag || hasTag(s, tag)) && matchesSearch(publicStory(s, precision), terms));
 
 	/** @type {Map<number, any[]>} */
 	const grouped = new Map();
@@ -32,7 +35,7 @@ export const load = async ({ locals, url }) => {
 			// For the thumbnail of a story with no picture.
 			kind: leadBlock(s)?.type ?? '',
 			date: s.date,
-			location: s.location,
+			location: publicLocation(s.location, precision),
 			summary: s.summary,
 			coverImageId: noteThumbId(s),
 			draft: s.draft,

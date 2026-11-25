@@ -65,6 +65,13 @@ story has one,
 
 Everything except `slug`, `date` and `blocks` is optional.
 
+`coords` is only as precise as the site's owner allows (Settings → Location).
+By default it is rounded to two decimal places, about a kilometre, and carries
+`"approximate": true`: show it as an area, not a pin. A site set to exact
+locations sends the full pair without that flag; a site that hides locations
+sends no `coords` at all. A `location` that is itself coordinates is rounded
+or dropped the same way.
+
 ### Items without a title (notes)
 
 A story does not need a title. Such an item has **no `title`** in the JSON

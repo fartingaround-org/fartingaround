@@ -1,6 +1,7 @@
 /** Site-wide settings the owner changes in the admin. */
 import { getDb, nowIso } from './db.js';
 import { commentsModeOf, visibilityOf } from '../story-access.js';
+import { DEFAULT_LOCATION_PRECISION, locationPrecisionOf } from '../location-privacy.js';
 
 /** @param {string} key @returns {Promise<string | null>} */
 async function get(key) {
@@ -47,6 +48,22 @@ export async function setCommentsMode(v) {
 	const mode = commentsModeOf(v);
 	if (!mode) throw new Error('comments mode must be off, readers or everyone');
 	await set('comments.mode', mode);
+}
+
+/**
+ * How precisely a story's location is published: 'area' (the default, about a
+ * kilometre), 'exact' or 'hidden'. See src/lib/location-privacy.js.
+ * @returns {Promise<import('../location-privacy.js').LocationPrecision>}
+ */
+export async function locationPrecision() {
+	return locationPrecisionOf(await get('stories.location_precision')) ?? DEFAULT_LOCATION_PRECISION;
+}
+
+/** @param {unknown} v */
+export async function setLocationPrecision(v) {
+	const precision = locationPrecisionOf(v);
+	if (!precision) throw new Error('location precision must be area, exact or hidden');
+	await set('stories.location_precision', precision);
 }
 
 /** Whether /following and /following.opml are shown to the public. On by default. */

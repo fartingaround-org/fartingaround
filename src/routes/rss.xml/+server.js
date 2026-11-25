@@ -14,7 +14,7 @@ import { listStoriesFor, publicStory } from '#lib/server/stories.js';
 import { storyToHtml, storySummary, withReaderToken } from '#lib/server/feed-html.js';
 import { readerFeed } from '#lib/server/reader-feed.js';
 import { isPrivate } from '#lib/story-access.js';
-import { siteIdentity } from '#lib/server/settings.js';
+import { locationPrecision, siteIdentity } from '#lib/server/settings.js';
 import { isNote, storyPublishedAt } from '#lib/story-label.js';
 
 /** Escape characters that have meaning in XML so user-authored prose can't break the feed. */
@@ -35,7 +35,8 @@ export async function GET({ setHeaders, url }) {
 	// personal link, /rss.xml?token=…, adds the private stories they may read.
 	const personal = await readerFeed(url);
 	if (personal === 'invalid') return new Response('This feed link is no longer valid.', { status: 404, headers: { 'cache-control': 'no-store' } });
-	const live = (await listStoriesFor(personal ? { reader: personal.reader } : {})).map(publicStory);
+	const precision = await locationPrecision();
+	const live = (await listStoriesFor(personal ? { reader: personal.reader } : {})).map((s) => publicStory(s, precision));
 	/** @param {import('#lib/types.js').Story} s */
 	const html = (s) => {
 		const out = storyToHtml(s, SITE);

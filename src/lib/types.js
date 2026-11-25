@@ -209,7 +209,10 @@
  * @property {string} title
  * @property {string} date              ISO yyyy-mm-dd
  * @property {string} [location]
- * @property {{ lat: number, lon: number, accuracy?: number }} [coords]   GPS coords carried over from the draft
+ * @property {{ lat: number, lon: number, accuracy?: number, approximate?: true }} [coords]
+ *                                      GPS coords carried over from the draft. Stored exactly;
+ *                                      publicStory() rounds or drops them for visitors
+ *                                      (`approximate: true` marks a rounded pair).
  * @property {WeatherSnapshot} [weather] Weather captured at the moment GPS was tapped
  * @property {AstroSnapshot} [astro]     Astronomical state at capture time + place
  * @property {string} [summary]

@@ -10,6 +10,8 @@
 
 import { listStoriesFor } from '#lib/server/stories.js';
 import { storyLabel } from '#lib/story-label.js';
+import { locationPrecision } from '#lib/server/settings.js';
+import { publicCoords, publicLocation } from '#lib/location-privacy.js';
 
 // Stories whose coords fall within this many metres of an existing cluster are
 // folded into it. ~80 m comfortably absorbs GPS jitter around a single spot
@@ -39,16 +41,22 @@ function distanceM(aLat, aLon, bLat, bLon) {
 export const load = async ({ locals }) => {
 	const visible = await listStoriesFor(locals);
 
+	// The map shows a story where the story page says it is: at the site's
+	// location precision, so a pin is never more exact than the page (and with
+	// locations hidden there are no pins at all).
+	const precision = await locationPrecision();
+
 	const withCoords = visible
+		.map((s) => ({ ...s, coords: publicCoords(s.coords, precision) }))
 		.filter(
-			/** @returns {s is import('#lib/types.js').Story & { coords: { lat: number, lon: number } }} */
-			(s) => !!s.coords && Number.isFinite(s.coords.lat) && Number.isFinite(s.coords.lon)
+			/** @returns {s is typeof s & { coords: { lat: number, lon: number } }} */
+			(s) => !!s.coords
 		)
 		.map((s) => ({
 			slug: s.slug,
 			title: storyLabel(s),
 			date: s.date,
-			location: s.location || '',
+			location: publicLocation(s.location, precision) || '',
 			summary: s.summary || '',
 			coverImageId: s.coverImageId || '',
 			coords: { lat: s.coords.lat, lon: s.coords.lon },

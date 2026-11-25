@@ -5,15 +5,18 @@ import {
 	commentsMode,
 	defaultVisibility,
 	followingPublic,
+	locationPrecision,
 	setAuthorName,
 	setCommentsMode,
 	setDefaultVisibility,
 	setFollowingPublic,
+	setLocationPrecision,
 	setSiteIdentity,
 	siteIdentity,
 	SITE_DEFAULTS
 } from '#lib/server/settings.js';
 import { commentsModeOf } from '#lib/story-access.js';
+import { locationPrecisionOf } from '#lib/location-privacy.js';
 import { config } from '#lib/server/config.js';
 import { qrSvg } from '#lib/server/qr.js';
 import { appConnectLink } from '#lib/app-link.js';
@@ -26,6 +29,7 @@ export const load = async ({ url }) => ({
 	host: url.host,
 	authorName: await authorName(),
 	defaultVisibility: await defaultVisibility(),
+	locationPrecision: await locationPrecision(),
 	followingPublic: await followingPublic(),
 	commentsMode: await commentsMode(),
 	// The code that connects the phone app. It carries the site's token, so it
@@ -45,6 +49,8 @@ export const actions = {
 		const mode = commentsModeOf(f.get('mode'));
 		if (visibility !== 'public' && visibility !== 'private') return fail(400, { error: 'Choose public or private.' });
 		if (!mode) return fail(400, { error: 'Choose who can see comments.' });
+		const precision = locationPrecisionOf(f.get('locationPrecision'));
+		if (!precision) return fail(400, { error: 'Choose how precisely locations are shown.' });
 		await setAuthorName(f.get('authorName'));
 		await setSiteIdentity({
 			name: f.get('siteName'),
@@ -61,6 +67,7 @@ export const actions = {
 			about: f.get('about')
 		});
 		await setDefaultVisibility(visibility);
+		await setLocationPrecision(precision);
 		await setFollowingPublic(f.get('following') !== 'hidden');
 		await setCommentsMode(mode);
 		return { saved: true };

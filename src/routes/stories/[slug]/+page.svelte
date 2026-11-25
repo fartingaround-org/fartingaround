@@ -73,16 +73,20 @@
 			{/if}
 			{#if story.summary}<p class="story-summary">{story.summary}</p>{/if}
 			{#if story.coords}
+				<!-- An approximate location is an area, not a spot: no marker, a wider view, two decimals. -->
+				{@const approx = !!story.coords.approximate}
 				<p class="story-where">
 					<a
 						class="where-link"
-						href={`https://www.openstreetmap.org/?mlat=${story.coords.lat}&mlon=${story.coords.lon}#map=14/${story.coords.lat}/${story.coords.lon}`}
+						href={approx
+							? `https://www.openstreetmap.org/#map=12/${story.coords.lat}/${story.coords.lon}`
+							: `https://www.openstreetmap.org/?mlat=${story.coords.lat}&mlon=${story.coords.lon}#map=14/${story.coords.lat}/${story.coords.lon}`}
 						target="_blank"
 						rel="noopener noreferrer"
-						title="Open in OpenStreetMap"
+						title={approx ? 'Approximate area. Open in OpenStreetMap' : 'Open in OpenStreetMap'}
 					>
 						<svg class="pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.500-5.800-6.500-10.500a6.500 6.500 0 0 1 13 0C18.500 15.200 12 21 12 21z" /><circle cx="12" cy="10.500" r="2.300" /></svg>
-						{story.coords.lat.toFixed(4)}, {story.coords.lon.toFixed(4)}
+						{#if approx}<span class="visually-hidden">Approximately</span><span aria-hidden="true">≈</span>{' '}{story.coords.lat.toFixed(2)}, {story.coords.lon.toFixed(2)}{:else}{story.coords.lat.toFixed(4)}, {story.coords.lon.toFixed(4)}{/if}
 					</a>
 				</p>
 			{/if}

@@ -6,6 +6,7 @@
 import { getDb, nowIso, parseDoc } from './db.js';
 import { defaultVisibility } from './settings.js';
 import { canReadStory, resolveVisibility } from '../story-access.js';
+import { publicCoords, publicLocation } from '../location-privacy.js';
 import { buildMediaIndex } from '../media-access.js';
 import { storyLabel } from '../story-label.js';
 
@@ -199,14 +200,23 @@ export function toSlug(input) {
  * exists so a location can be applied from the editor later; a photo's
  * location is public only once `coords` has been set on it deliberately.
  *
+ * It also decides how precisely the story's own `coords` go out: see
+ * src/lib/location-privacy.js. Without a `precision` they are rounded to the
+ * approximate area, so a caller that forgets to pass the site's setting (or
+ * `.map(publicStory)`, which passes an index) can never publish the exact spot.
+ *
  * Call this in every public load that ships a story's blocks to the client.
  *
  * @param {import('#lib/types.js').Story} story
+ * @param {unknown} [precision]  the site's locationPrecision() setting
  * @returns {import('#lib/types.js').Story}
  */
-export function publicStory(story) {
+export function publicStory(story, precision) {
 	return {
 		...story,
+		coords: publicCoords(story.coords, precision),
+		// A place name passes through unless it is itself a precise position.
+		location: publicLocation(story.location, precision),
 		blocks: (story.blocks || []).map((b) => {
 			// A single photo keeps what its file said too (for the editor's "use the
 			// photo's location"); that is the author's, never a visitor's.

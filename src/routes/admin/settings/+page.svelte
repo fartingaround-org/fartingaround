@@ -104,6 +104,23 @@
 	</section>
 
 	<section class="a-panel group">
+		<h2>Location</h2>
+		<label>A story's location is shown
+			<select name="locationPrecision" value={data.locationPrecision}>
+				<option value="area">Approximately: the area, to about a kilometre</option>
+				<option value="exact">Exactly: the spot it was posted from</option>
+				<option value="hidden">Not at all: just the place name</option>
+			</select>
+		</label>
+		<p class="a-fine">
+			The phone records where you are when you post, so "exactly" puts a pin on your home whenever
+			you post from it. This covers the story page, the map and your feeds, and it applies to every
+			story, old and new. Locations you add to photos in a photo dump are separate: each is shown
+			exactly where you put it.
+		</p>
+	</section>
+
+	<section class="a-panel group">
 		<h2>Comments</h2>
 		<label>Comment sections are shown to
 			<select name="mode" value={data.commentsMode}>
